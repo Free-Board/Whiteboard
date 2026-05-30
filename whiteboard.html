@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FreeBoard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#045fd0;color:#fff;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+#login-screen{position:fixed;inset:0;overflow-y:auto;z-index:1000;background:#0a1628}
+.brand{font-size:34px;font-weight:800;background:linear-gradient(135deg,#4f8ef7,#7b61ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+@keyframes scrollDot{0%{transform:translateY(0);opacity:1}100%{transform:translateY(12px);opacity:0}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cursor-dot{position:absolute;width:12px;height:12px;border-radius:50%;pointer-events:none}
+.cursor-label{position:absolute;font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;color:#fff;white-space:nowrap;pointer-events:none}
+#app{display:none;flex-direction:column;height:100vh}
+#topbar{background:#033d8a;padding:0 12px;display:flex;align-items:center;gap:7px;height:50px;flex-shrink:0;border-bottom:1px solid #0250b3;overflow-x:auto}
+.freeboard-logo{font-size:17px;font-weight:800;color:#fff;margin-right:4px;white-space:nowrap;flex-shrink:0;letter-spacing:.5px}
+.tool-btn{padding:5px 11px;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;cursor:pointer;font-size:12px;background:transparent;color:#cce4ff;transition:.15s;font-weight:500;white-space:nowrap;flex-shrink:0}
+.tool-btn:hover{border-color:#fff;color:#fff}
+.tool-btn.active{background:#fff;color:#045fd0;border-color:#fff;font-weight:700}
+.sep{width:1px;height:26px;background:rgba(255,255,255,.2);margin:0 2px;flex-shrink:0}
+#color-picker{width:30px;height:30px;border:2px solid rgba(255,255,255,.4);border-radius:7px;cursor:pointer;padding:2px;background:transparent;flex-shrink:0}
+#stroke-size{width:70px;accent-color:#fff;flex-shrink:0}
+#size-label{font-size:12px;color:#cce4ff;min-width:18px;flex-shrink:0}
+.danger-btn{color:#ffaaaa;border-color:rgba(255,150,150,.4)}
+.danger-btn:hover{background:rgba(255,100,100,.2);border-color:#ffaaaa}
+#online-pill{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:5px}
+.online-dot{width:7px;height:7px;border-radius:50%;background:#6effa0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#content{display:flex;flex:1;overflow:hidden}
+#canvas-wrap{flex:1;overflow:hidden;background:#045fd0;position:relative;cursor:none}
+#board{position:absolute;top:0;left:0;touch-action:none;display:block}
+#zoom-controls{position:absolute;bottom:16px;left:16px;display:flex;align-items:center;gap:6px;background:rgba(3,61,138,.9);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:6px 14px;z-index:10}
+.zoom-btn{background:transparent;border:none;color:#cce4ff;font-size:18px;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.15s}
+.zoom-btn:hover{background:rgba(255,255,255,.15);color:#fff}
+#zoom-label{font-size:12px;color:#cce4ff;min-width:42px;text-align:center}
+#log-panel{width:255px;background:#033d8a;border-left:1px solid #0250b3;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .3s ease,border .3s ease}
+#log-panel.hidden{width:0;border-left:none}
+#log-header{padding:12px 14px;border-bottom:1px solid #0250b3;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;white-space:nowrap}
+#log-entries{flex:1;overflow-y:auto;padding:8px;min-width:239px}
+.log-entry{padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:12px;line-height:1.5;border-left:3px solid;background:rgba(255,255,255,.07)}
+.log-entry .who{font-weight:700}
+.log-entry .what{color:#aac8ff}
+.log-entry .when{color:#5580bb;font-size:11px;margin-top:2px}
+#user-info{padding:10px 14px;border-top:1px solid #0250b3;display:flex;align-items:center;gap:8px;font-size:12px;flex-shrink:0;min-width:239px}
+.user-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+#status-bar{background:#033d8a;padding:3px 12px;font-size:11px;color:#5580bb;display:flex;gap:16px;flex-shrink:0;border-top:1px solid #0250b3}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <!-- Hero Section -->
+  <div id="hero" style="position:relative;height:100vh;display:flex;align-items:flex-end;overflow:hidden;flex-shrink:0">
+    <!-- Full background: Roger is so cool whiteboard image -->
+    <div style="position:absolute;inset:0;overflow:hidden">
+      <canvas id="demo-canvas" style="position:absolute;inset:0;width:100%;height:100%;background:#f7f7f5"></canvas>
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(21,87,176,0.98) 0%,rgba(21,87,176,0.72) 38%,rgba(21,87,176,0.12) 68%,transparent 100%)"></div>
+      <!-- Fake live cursors -->
+      <div id="fake-cursors" style="position:absolute;inset:0;pointer-events:none"></div>
+    </div>
+
+    <!-- Hero text — left aligned, bottom of screen -->
+    <div style="position:relative;z-index:2;padding:0 60px 64px;max-width:700px">
+      <h1 style="font-size:clamp(38px,7vw,78px);font-weight:800;line-height:1.05;margin-bottom:16px;color:#fff;letter-spacing:-1px">Welcome to<br>FreeBoard!</h1>
+      <p style="font-size:clamp(15px,1.8vw,18px);color:rgba(255,255,255,.65);max-width:480px;margin:0 0 32px;line-height:1.6;font-weight:400">A public whiteboard without signup.</p>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <a href="#join-section" style="background:#fff;color:#0a1628;padding:13px 28px;border-radius:6px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;transition:.15s" onmouseover="this.style.background='#e8f0ff'" onmouseout="this.style.background='#fff'">Open Whiteboard</a>
+        <a href="#join-section" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);padding:13px 28px;border-radius:6px;font-size:15px;font-weight:500;text-decoration:none;border:1px solid rgba(255,255,255,.2);display:inline-block;transition:.15s" onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Start a Canvas</a>
+
+      </div>
+    </div>
+
+    <!-- Scroll hint -->
+    <div style="position:absolute;bottom:22px;right:40px;color:rgba(255,255,255,.3);font-size:12px;letter-spacing:.05em">scroll ↓</div>
+  </div>
+
+  <!-- Join Section -->
+  <div id="join-section" style="background:linear-gradient(160deg,#1a6ed8 0%,#1557b0 60%,#0f3f8a 100%);padding:72px 60px;flex-shrink:0">
+    <div style="max-width:1060px;margin:0 auto;display:flex;gap:100px;align-items:flex-start;flex-wrap:wrap">
+
+      <!-- Left: About -->
+      <div style="flex:1.2;min-width:280px">
+        <h2 style="font-size:clamp(24px,3.5vw,36px);font-weight:700;color:#fff;margin-bottom:20px;line-height:1.2">Greetings and salutations!</h2>
+        <p style="font-size:15px;color:rgba(255,255,255,.88);line-height:1.85;margin-bottom:16px">FreeBoard is an online whiteboard that can host up to 100 people drawing at the same time on the same whiteboard. Feel free to draw whatever you like, but please use common sense.</p>
+        <p style="font-size:15px;color:rgba(255,255,255,.7);line-height:1.85;margin-bottom:32px">— Roger</p>
+      </div>
+
+      <!-- Right: Join box -->
+      <div style="flex:1;min-width:260px;max-width:380px">
+        <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:36px">
+          <div style="margin-bottom:24px">
+            <div style="font-size:20px;font-weight:700;color:#0a1628;margin-bottom:6px">Join the board</div>
+            <div style="font-size:13px;color:#556">No account needed.</div>
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:12px;color:#445;display:block;margin-bottom:6px">Your name</label>
+            <input id="in-name" placeholder="e.g. Roger" maxlength="30" style="width:100%;padding:11px 14px;border:1px solid #bcd;border-radius:6px;font-size:14px;outline:none;font-family:inherit;background:#f4faff;color:#0a1628;transition:.2s" onfocus="this.style.borderColor='#4f8ef7'" onblur="this.style.borderColor='#bcd'"/>
+          </div>
+          <button id="join-btn" style="width:100%;padding:13px;background:#4f8ef7;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='#3a7de8'" onmouseout="this.style.background='#4f8ef7'">Enter FreeBoard</button>
+          <div class="login-err" id="login-err" style="color:#ef4444;font-size:13px;margin-top:10px;display:none">Please enter your name.</div>
+          <div id="full-err" style="color:#c00;font-size:13px;margin-top:10px;display:none;line-height:1.6;padding:10px 12px;background:rgba(200,0,0,.06);border-radius:6px;border:1px solid rgba(200,0,0,.2)">There are 100 people already in the server.<br>Please Wait! 😉</div>
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(0,0,0,.08);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:12px;color:#556">Capacity</div>
+            <div style="font-size:12px;color:#334"><span id="join-online-count" style="color:#1a8a4a;font-weight:600">—</span> / 100 online</div>
+          </div>
+          <div style="margin-top:8px">
+            <div style="height:4px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden">
+              <div id="capacity-bar" style="height:100%;background:#4f8ef7;border-radius:2px;width:0%;transition:.5s"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <div id="topbar">
+    <span class="freeboard-logo">FreeBoard</span>
+    <div class="sep"></div>
+    <button class="tool-btn active" id="t-pen">Pen</button>
+    <button class="tool-btn" id="t-highlight">Highlight</button>
+    <button class="tool-btn" id="t-line">Line</button>
+    <button class="tool-btn" id="t-rect">Rect</button>
+    <button class="tool-btn" id="t-circle">Circle</button>
+    <button class="tool-btn" id="t-text">Text</button>
+    <button class="tool-btn" id="t-eraser">Eraser</button>
+    <div class="sep"></div>
+    <input type="color" id="color-picker" value="#000000"/>
+    <input type="range" id="stroke-size" min="1" max="100" value="3"/>
+    <span id="size-label">3</span>
+    <div class="sep"></div>
+    <button class="tool-btn danger-btn" id="clear-mine-btn">Clear Mine</button>
+    <div style="flex:1"></div>
+    <div id="online-pill"><div class="online-dot"></div><span id="online-count">1 online</span></div>
+    <div class="sep"></div>
+    <button class="tool-btn" id="save-btn" style="color:#aaddff;border-color:rgba(170,221,255,.4)">Save PNG</button>
+    <button class="tool-btn" id="log-toggle-btn" style="color:#ccbbff;border-color:rgba(200,180,255,.4)">Log</button>
+  </div>
+  <div id="content">
+    <div id="canvas-wrap">
+      <canvas id="board"></canvas>
+      <div id="zoom-controls">
+        <button class="zoom-btn" id="zoom-out-btn">−</button>
+        <span id="zoom-label">100%</span>
+        <button class="zoom-btn" id="zoom-in-btn">+</button>
+        <button class="zoom-btn" id="home-btn" style="font-size:12px;width:auto;padding:0 10px">Home</button>
+      </div>
+    </div>
+    <div id="log-panel">
+      <div id="log-header">Activity Log <span style="font-size:11px;color:#6effa0;font-weight:400">● live</span></div>
+      <div id="log-entries"><div style="color:#5580bb;font-size:12px;padding:8px">No activity yet!</div></div>
+      <div id="user-info">
+        <div class="user-dot" id="my-dot"></div>
+        <div><div id="my-name-label" style="font-weight:600;color:#fff"></div><div style="color:#5580bb;font-size:11px">you</div></div>
+      </div>
+    </div>
+  </div>
+  <div id="status-bar">
+    <span id="tool-label">Tool: Pen</span>
+    <span id="zoom-status">Zoom: 100%</span>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyAXwYbjaPCw7upkuxIUlz6byGXAjFAKjkM",
+  authDomain:"freeboard-1f3c4.firebaseapp.com",
+  projectId:"freeboard-1f3c4",
+  storageBucket:"freeboard-1f3c4.firebasestorage.app",
+  messagingSenderId:"134603470341",
+  appId:"1:134603470341:web:9ee9e03aaec66e84358e6c",
+  databaseURL:"https://freeboard-1f3c4-default-rtdb.firebaseio.com"
+});
+const db=firebase.database();
+
+const COLORS=['#e74c3c','#e67e22','#f39c12','#2ecc71','#1abc9c','#3498db','#9b59b6','#e91e63','#00bcd4','#ff5722','#4f8ef7','#795548'];
+const BOARD_W=100000, BOARD_H=60000;
+
+let user=null, tool='pen', logVisible=true;
+let drawing=false, startX=0, startY=0, lastX=0, lastY=0;
+let allStrokes={}, drawnKeys=new Set();
+let vScale=1, vOffX=0, vOffY=0;
+let isPanning=false, panLastX=0, panLastY=0;
+let curX=0, curY=0, curVisible=false;
+// Name tag tracking: { uid -> {x, y, name, color, timer, screenX, screenY} }
+const nameTags = {};
+
+const wrap=document.getElementById('canvas-wrap');
+const canvas=document.getElementById('board');
+const ctx=canvas.getContext('2d');
+
+// Separate offscreen for strokes only (board drawn underneath)
+const sCanvas=document.createElement('canvas');
+const sCtx=sCanvas.getContext('2d');
+
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function randColor(){return COLORS[Math.floor(Math.random()*COLORS.length)];}
+function randId(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
+
+// ── Resize ──
+function resizeCanvas(){
+  const w=wrap.clientWidth, h=wrap.clientHeight;
+  canvas.width=w; canvas.height=h;
+  sCanvas.width=w; sCanvas.height=h;
+  clampView(); fullRedraw();
+}
+window.addEventListener('resize',resizeCanvas);
+
+function screenToBoard(sx,sy){return{x:(sx-vOffX)/vScale, y:(sy-vOffY)/vScale};}
+function boardToScreen(bx,by){return{x:bx*vScale+vOffX, y:by*vScale+vOffY};}
+
+// ── Clamp: board always fills screen, no gaps ──
+function clampView(){
+  const minScale=Math.max(canvas.width/BOARD_W, canvas.height/BOARD_H);
+  vScale=Math.min(Math.max(vScale,minScale),10);
+  const bw=BOARD_W*vScale, bh=BOARD_H*vScale;
+  vOffX=Math.min(0,Math.max(canvas.width-bw,vOffX));
+  vOffY=Math.min(0,Math.max(canvas.height-bh,vOffY));
+}
+
+// ── Draw board bg + grid onto main canvas ──
+function drawBoard(){
+  ctx.save();
+  ctx.translate(vOffX,vOffY); ctx.scale(vScale,vScale);
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,BOARD_W,BOARD_H);
+  ctx.strokeStyle='#eeeeee'; ctx.lineWidth=1/vScale;
+  for(let x=0;x<=BOARD_W;x+=200){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,BOARD_H);ctx.stroke();}
+  for(let y=0;y<=BOARD_H;y+=200){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(BOARD_W,y);ctx.stroke();}
+  ctx.restore();
+}
+
+// ── Render a single stroke onto a given context (already translated) ──
+function renderStroke(c,s){
+  c.save(); c.lineCap='round'; c.lineJoin='round';
+  if(s.tool==='pen'||s.tool==='highlight'){
+    if(!s.pts||s.pts.length<1){c.restore();return;}
+    c.globalAlpha=s.tool==='highlight'?0.4:1;
+    c.globalCompositeOperation='source-over';
+    c.strokeStyle=s.dc||'#000';
+    c.lineWidth=s.tool==='highlight'?(s.sz||3)*5:(s.sz||3);
+    if(s.tool==='highlight')c.lineCap='square';
+    c.beginPath(); c.moveTo(s.pts[0].x,s.pts[0].y);
+    for(let i=1;i<s.pts.length;i++)c.lineTo(s.pts[i].x,s.pts[i].y);
+    c.stroke();
+  } else if(s.tool==='eraser'){
+    if(!s.pts||s.pts.length<1){c.restore();return;}
+    c.globalAlpha=1; c.globalCompositeOperation='destination-out';
+    c.lineWidth=(s.sz||3)*4;
+    c.beginPath(); c.moveTo(s.pts[0].x,s.pts[0].y);
+    for(let i=1;i<s.pts.length;i++)c.lineTo(s.pts[i].x,s.pts[i].y);
+    c.stroke();
+  } else if(s.tool==='line'){
+    c.globalAlpha=1; c.globalCompositeOperation='source-over';
+    c.strokeStyle=s.dc||'#000'; c.lineWidth=s.sz||3;
+    c.beginPath(); c.moveTo(s.x1,s.y1); c.lineTo(s.x2,s.y2); c.stroke();
+  } else if(s.tool==='rect'){
+    c.globalAlpha=1; c.globalCompositeOperation='source-over';
+    c.strokeStyle=s.dc||'#000'; c.lineWidth=s.sz||3;
+    c.strokeRect(s.x1,s.y1,s.x2-s.x1,s.y2-s.y1);
+  } else if(s.tool==='circle'){
+    c.globalAlpha=1; c.globalCompositeOperation='source-over';
+    c.strokeStyle=s.dc||'#000'; c.lineWidth=s.sz||3;
+    const rx=(s.x2-s.x1)/2,ry=(s.y2-s.y1)/2;
+    c.beginPath(); c.ellipse(s.x1+rx,s.y1+ry,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2); c.stroke();
+  } else if(s.tool==='text'){
+    c.globalAlpha=1; c.globalCompositeOperation='source-over';
+    c.fillStyle=s.dc||'#000'; c.font=`${Math.max(14,(s.sz||3)*5)}px Segoe UI`;
+    c.fillText(s.txt||'',s.x1,s.y1);
+  }
+  c.restore();
+}
+
+// ── Rebuild strokes offscreen from scratch ──
+function rebuildStrokesOffscreen(){
+  sCtx.clearRect(0,0,sCanvas.width,sCanvas.height);
+  sCtx.save();
+  sCtx.translate(vOffX,vOffY); sCtx.scale(vScale,vScale);
+  Object.values(allStrokes).sort((a,b)=>a.time-b.time).forEach(s=>renderStroke(sCtx,s));
+  sCtx.restore();
+}
+
+// ── Full redraw: board + all strokes + cursor ──
+function fullRedraw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBoard();
+  ctx.drawImage(sCanvas,0,0);
+  drawCursor();
+  drawNameTags();
+}
+
+// ── Draw cursor circle ──
+function drawCursor(){
+  if(!curVisible) return;
+  const sz=+document.getElementById('stroke-size').value;
+  ctx.save();
+  if(tool==='text'){
+    // Show a text cursor: vertical bar + font size preview
+    const fontPx=Math.max(14,sz*5)*vScale;
+    const barH=Math.max(16,fontPx);
+    ctx.strokeStyle='rgba(79,142,247,0.9)';
+    ctx.lineWidth=2;
+    ctx.setLineDash([]);
+    // Vertical bar
+    ctx.beginPath();ctx.moveTo(curX,curY-barH/2);ctx.lineTo(curX,curY+barH/2);ctx.stroke();
+    // Top and bottom serifs
+    ctx.beginPath();ctx.moveTo(curX-5,curY-barH/2);ctx.lineTo(curX+5,curY-barH/2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(curX-5,curY+barH/2);ctx.lineTo(curX+5,curY+barH/2);ctx.stroke();
+    // Font size label
+    ctx.fillStyle='rgba(79,142,247,0.9)';
+    ctx.font='11px Segoe UI';ctx.setLineDash([]);
+    ctx.fillText(`${Math.max(14,sz*5)}px`,curX+8,curY-barH/2+10);
+  } else {
+    let r;
+    if(tool==='eraser') r=(sz*4/2)*vScale;
+    else if(tool==='highlight') r=(sz*5/2)*vScale;
+    else r=(sz/2)*vScale;
+    r=Math.max(2,r);
+    ctx.beginPath(); ctx.arc(curX,curY,r,0,Math.PI*2);
+    ctx.strokeStyle=tool==='eraser'?'rgba(100,100,100,0.8)':'rgba(79,142,247,0.9)';
+    ctx.lineWidth=1.5; ctx.setLineDash([3,3]); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ── Zoom ──
+function doZoom(delta,cx,cy){
+  cx=cx??canvas.width/2; cy=cy??canvas.height/2;
+  const ns=Math.min(Math.max(vScale*(1+delta),0.001),10);
+  const r=ns/vScale;
+  vOffX=cx-(cx-vOffX)*r; vOffY=cy-(cy-vOffY)*r; vScale=ns;
+  clampView(); updateZoomUI(); rebuildStrokesOffscreen(); fullRedraw();
+}
+function updateZoomUI(){
+  const p=Math.round(vScale*100)+'%';
+  document.getElementById('zoom-label').textContent=p;
+  document.getElementById('zoom-status').textContent='Zoom: '+p;
+}
+function resetView(){
+  vScale=Math.min(canvas.width/8000,canvas.height/5000);
+  vOffX=0; vOffY=0; clampView(); updateZoomUI(); rebuildStrokesOffscreen(); fullRedraw();
+}
+
+wrap.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=wrap.getBoundingClientRect();
+  doZoom(e.deltaY<0?0.1:-0.1,e.clientX-r.left,e.clientY-r.top);
+},{passive:false});
+
+wrap.addEventListener('mousedown',e=>{
+  if(e.button===1||e.button===2){
+    isPanning=true; panLastX=e.clientX; panLastY=e.clientY;
+    wrap.style.cursor='grabbing'; e.preventDefault();
+  }
+});
+window.addEventListener('mousemove',e=>{
+  if(!isPanning)return;
+  vOffX+=e.clientX-panLastX; vOffY+=e.clientY-panLastY;
+  panLastX=e.clientX; panLastY=e.clientY;
+  clampView(); rebuildStrokesOffscreen(); fullRedraw();
+});
+window.addEventListener('mouseup',()=>{if(isPanning){isPanning=false;wrap.style.cursor='';}});
+wrap.addEventListener('contextmenu',e=>e.preventDefault());
+
+// ── Get board position from event ──
+function evtPos(e){
+  const r=wrap.getBoundingClientRect();
+  const src=e.touches?e.touches[0]:e;
+  const b=screenToBoard(src.clientX-r.left, src.clientY-r.top);
+  b.x=Math.max(0,Math.min(BOARD_W,b.x));
+  b.y=Math.max(0,Math.min(BOARD_H,b.y));
+  return b;
+}
+function evtScreen(e){
+  const r=wrap.getBoundingClientRect();
+  const src=e.touches?e.touches[0]:e;
+  return{x:src.clientX-r.left, y:src.clientY-r.top};
+}
+
+// ── Drawing events ──
+canvas.addEventListener('mousedown',e=>{if(e.button===0&&!isPanning)startDraw(e);});
+canvas.addEventListener('mousemove',onMouseMove);
+canvas.addEventListener('mouseup',e=>{if(e.button===0)endDraw(e);});
+canvas.addEventListener('mouseleave',()=>{curVisible=false;if(drawing)endDraw({});fullRedraw();});
+canvas.addEventListener('mouseenter',()=>{curVisible=true;});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();startDraw(e);},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();onMouseMove(e);},{passive:false});
+canvas.addEventListener('touchend',e=>endDraw(e));
+
+function startDraw(e){
+  if(!user||isPanning)return;
+  if(tool==='text'){handleText(e);return;}
+  const p=evtPos(e);
+  drawing=true;
+  startX=p.x; startY=p.y; lastX=p.x; lastY=p.y;
+  currentStrokeId=randId();
+  currentStrokePts=[{x:p.x,y:p.y}];
+  const color=document.getElementById('color-picker').value;
+  const sz=+document.getElementById('stroke-size').value;
+  const stroke={id:currentStrokeId,user:user.name,uid:user.id,color:user.color,
+    tool,dc:tool==='eraser'?null:color,sz,
+    x1:p.x,y1:p.y,x2:p.x,y2:p.y,
+    pts:[{x:p.x,y:p.y}],time:Date.now()};
+  allStrokes[currentStrokeId]=stroke;
+  drawnKeys.add(currentStrokeId);
+  db.ref('strokes/'+currentStrokeId).set(stroke);
+  updateNameTag(user.id, user.name, user.color, p.x, p.y);
+}
+
+function onMouseMove(e){
+  if(!user)return;
+  const sc=evtScreen(e);
+  curX=sc.x; curY=sc.y; curVisible=true;
+
+  if(!drawing||isPanning){
+    // Just redraw cursor
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawBoard();
+    ctx.drawImage(sCanvas,0,0);
+    drawCursor();
+    return;
+  }
+
+  const p=evtPos(e);
+  const color=document.getElementById('color-picker').value;
+  const sz=+document.getElementById('stroke-size').value;
+
+  // Add point
+  currentStrokePts.push({x:p.x,y:p.y});
+
+  // For pen/highlight/eraser: draw the new segment directly onto sCanvas
+  if(tool==='pen'||tool==='highlight'||tool==='eraser'){
+    sCtx.save();
+    sCtx.translate(vOffX,vOffY); sCtx.scale(vScale,vScale);
+    sCtx.lineCap='round'; sCtx.lineJoin='round';
+    if(tool==='pen'){
+      sCtx.globalAlpha=1; sCtx.globalCompositeOperation='source-over';
+      sCtx.strokeStyle=color; sCtx.lineWidth=sz;
+      sCtx.beginPath(); sCtx.moveTo(lastX,lastY); sCtx.lineTo(p.x,p.y); sCtx.stroke();
+    } else if(tool==='highlight'){
+      sCtx.globalAlpha=0.4; sCtx.globalCompositeOperation='source-over';
+      sCtx.strokeStyle=color; sCtx.lineWidth=sz*5; sCtx.lineCap='square';
+      sCtx.beginPath(); sCtx.moveTo(lastX,lastY); sCtx.lineTo(p.x,p.y); sCtx.stroke();
+    } else if(tool==='eraser'){
+      sCtx.globalAlpha=1; sCtx.globalCompositeOperation='destination-out';
+      sCtx.lineWidth=sz*4;
+      sCtx.beginPath(); sCtx.moveTo(lastX,lastY); sCtx.lineTo(p.x,p.y); sCtx.stroke();
+    }
+    sCtx.restore();
+  } else {
+    // Shapes: rebuild offscreen each move for clean preview
+    rebuildStrokesOffscreen();
+    // Draw preview shape
+    sCtx.save();
+    sCtx.translate(vOffX,vOffY); sCtx.scale(vScale,vScale);
+    sCtx.globalAlpha=1; sCtx.globalCompositeOperation='source-over';
+    sCtx.strokeStyle=color; sCtx.lineWidth=sz; sCtx.lineCap='round';
+    if(tool==='line'){sCtx.beginPath();sCtx.moveTo(startX,startY);sCtx.lineTo(p.x,p.y);sCtx.stroke();}
+    else if(tool==='rect'){sCtx.strokeRect(startX,startY,p.x-startX,p.y-startY);}
+    else if(tool==='circle'){const rx=(p.x-startX)/2,ry=(p.y-startY)/2;sCtx.beginPath();sCtx.ellipse(startX+rx,startY+ry,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);sCtx.stroke();}
+    sCtx.restore();
+  }
+
+  lastX=p.x; lastY=p.y;
+  updateNameTag(user.id, user.name, user.color, p.x, p.y);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawBoard();
+  ctx.drawImage(sCanvas,0,0);
+  drawCursor();
+
+  // Update firebase stroke pts every ~5 points
+  if(currentStrokePts.length%5===0){
+    const s=allStrokes[currentStrokeId];
+    if(s){s.pts=currentStrokePts;s.x2=p.x;s.y2=p.y;db.ref('strokes/'+currentStrokeId).update({pts:currentStrokePts,x2:p.x,y2:p.y});}
+  }
+}
+
+function endDraw(e){
+  if(!drawing)return; drawing=false;
+  if(!user||!currentStrokeId)return;
+  const color=document.getElementById('color-picker').value;
+  const sz=+document.getElementById('stroke-size').value;
+  // Final update to Firebase with all points
+  const s=allStrokes[currentStrokeId];
+  if(s){
+    s.pts=currentStrokePts; s.x2=lastX; s.y2=lastY;
+    db.ref('strokes/'+currentStrokeId).update({pts:currentStrokePts,x2:lastX,y2:lastY});
+  }
+  pushLog('drew with',tool);
+  currentStrokeId=null; currentStrokePts=[];
+}
+
+function handleText(e){
+  const p=evtPos(e); const txt=prompt('Enter text:'); if(!txt)return;
+  const color=document.getElementById('color-picker').value;
+  const sz=+document.getElementById('stroke-size').value;
+  const sid=randId();
+  const stroke={id:sid,user:user.name,uid:user.id,color:user.color,tool:'text',dc:color,sz,x1:p.x,y1:p.y,txt,time:Date.now()};
+  allStrokes[sid]=stroke; drawnKeys.add(sid);
+  db.ref('strokes/'+sid).set(stroke);
+  updateNameTag(user.id, user.name, user.color, p.x, p.y);
+  pushLog('typed',`"${txt.slice(0,20)}"`);
+  rebuildStrokesOffscreen(); fullRedraw();
+}
+
+function setTool(t){
+  tool=t;
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('t-'+t).classList.add('active');
+  document.getElementById('tool-label').textContent='Tool: '+t.charAt(0).toUpperCase()+t.slice(1);
+}
+
+function clearMyStrokes(){
+  if(!user||!confirm('Clear all your drawings?'))return;
+  Object.keys(allStrokes).forEach(k=>{if(allStrokes[k].uid===user.id){delete allStrokes[k];db.ref('strokes/'+k).remove();}});
+  pushLog('cleared','their drawings');
+  rebuildStrokesOffscreen(); fullRedraw();
+}
+
+function saveImage(){const a=document.createElement('a');a.download='freeboard.png';a.href=canvas.toDataURL();a.click();}
+
+function toggleLog(){
+  logVisible=!logVisible;
+  document.getElementById('log-panel').classList.toggle('hidden',!logVisible);
+  setTimeout(resizeCanvas,320);
+}
+
+function pushLog(verb,what){
+  db.ref('activityLog').push({name:user.name,color:user.color,verb,what,time:new Date().toLocaleTimeString(),ts:Date.now()});
+}
+function appendLogEntry(e){
+  const el=document.getElementById('log-entries');
+  const d=document.createElement('div');
+  d.className='log-entry'; d.style.borderColor=e.color;
+  d.innerHTML=`<div class="who" style="color:${e.color}">${esc(e.name)}</div><div class="what">${esc(e.verb)} ${esc(e.what)}</div><div class="when">${e.time}</div>`;
+  el.insertBefore(d,el.firstChild);
+  while(el.children.length>120)el.removeChild(el.lastChild);
+}
+
+const MAX_USERS = 100;
+
+function doLogin(){
+  const name=document.getElementById('in-name').value.trim();
+  if(!name){document.getElementById('login-err').style.display='block';return;}
+  document.getElementById('login-err').style.display='none';
+  document.getElementById('full-err').style.display='none';
+
+  // Check current online count before letting them in
+  db.ref('onlineUsers').once('value', snap=>{
+    const count = snap.numChildren();
+    if(count >= MAX_USERS){
+      document.getElementById('full-err').style.display='block';
+      document.getElementById('join-btn').disabled=true;
+      document.getElementById('join-btn').style.opacity='0.5';
+      // Re-check every 5 seconds in case someone leaves
+      const interval = setInterval(()=>{
+        db.ref('onlineUsers').once('value', snap2=>{
+          if(snap2.numChildren() < MAX_USERS){
+            clearInterval(interval);
+            document.getElementById('full-err').style.display='none';
+            document.getElementById('join-btn').disabled=false;
+            document.getElementById('join-btn').style.opacity='1';
+          }
+        });
+      }, 5000);
+      return;
+    }
+    completeLogin(name);
+  });
+}
+
+function completeLogin(name){
+  user={name,color:randColor(),id:randId()};
+  localStorage.setItem('freeboard-name',name);  document.getElementById('my-name-label').textContent=name;
+  document.getElementById('my-dot').style.background=user.color;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+
+  const myRef=db.ref('onlineUsers/'+user.id);
+  myRef.set({name:user.name,color:user.color,ts:firebase.database.ServerValue.TIMESTAMP});
+  myRef.onDisconnect().remove();
+  db.ref('onlineUsers').on('value',snap=>{
+    const c=snap.numChildren()||1;
+    document.getElementById('online-count').textContent=`${c} / ${MAX_USERS} online`;
+  });
+  // Update hero counter live even before login
+  db.ref('onlineUsers').on('value',snap=>{
+    const c=snap.numChildren()||0;
+    const hc=document.getElementById('hero-count');
+    const jc=document.getElementById('join-online-count');
+    if(hc)hc.textContent=`${c} / ${MAX_USERS} drawing now`;
+    if(jc)jc.textContent=c;
+  });
+
+  // Load existing strokes
+  db.ref('strokes').once('value',snap=>{
+    snap.forEach(child=>{
+      const k=child.key, s=child.val();
+      if(!drawnKeys.has(k)){drawnKeys.add(k);allStrokes[k]=s;}
+    });
+    resizeCanvas();
+    setTimeout(resetView,100);
+  });
+
+  // Listen for new strokes from others
+  db.ref('strokes').on('child_added',snap=>{
+    const k=snap.key,s=snap.val();
+    if(drawnKeys.has(k)){
+      // Update existing (for live updates from others)
+      allStrokes[k]=s;
+      if(k!==currentStrokeId){rebuildStrokesOffscreen();fullRedraw();}
+      return;
+    }
+    drawnKeys.add(k); allStrokes[k]=s;
+    rebuildStrokesOffscreen(); fullRedraw();
+  });
+  db.ref('strokes').on('child_changed',snap=>{
+    const k=snap.key,s=snap.val();
+    if(k===currentStrokeId)return;
+    allStrokes[k]=s;
+    // Show name tag for other users' live edits
+    if(s.pts&&s.pts.length>0){
+      const last=s.pts[s.pts.length-1];
+      updateNameTag(s.uid, s.user, s.color, last.x, last.y);
+    }
+    rebuildStrokesOffscreen(); fullRedraw();
+  });
+  db.ref('strokes').on('child_removed',snap=>{
+    delete allStrokes[snap.key]; drawnKeys.delete(snap.key);
+    rebuildStrokesOffscreen(); fullRedraw();
+  });
+  db.ref('activityLog').limitToLast(50).on('child_added',snap=>appendLogEntry(snap.val()));
+  pushLog('joined','FreeBoard');
+}
+
+document.getElementById('join-btn').onclick=doLogin;document.getElementById('in-name').onkeydown=e=>{if(e.key==='Enter')doLogin();};
+document.getElementById('t-pen').onclick=()=>setTool('pen');
+document.getElementById('t-highlight').onclick=()=>setTool('highlight');
+document.getElementById('t-line').onclick=()=>setTool('line');
+document.getElementById('t-rect').onclick=()=>setTool('rect');
+document.getElementById('t-circle').onclick=()=>setTool('circle');
+document.getElementById('t-text').onclick=()=>setTool('text');
+document.getElementById('t-eraser').onclick=()=>setTool('eraser');
+document.getElementById('clear-mine-btn').onclick=clearMyStrokes;
+document.getElementById('save-btn').onclick=saveImage;
+document.getElementById('log-toggle-btn').onclick=toggleLog;
+document.getElementById('zoom-in-btn').onclick=()=>doZoom(0.15);
+document.getElementById('zoom-out-btn').onclick=()=>doZoom(-0.15);
+document.getElementById('home-btn').onclick=resetView;
+document.getElementById('stroke-size').oninput=function(){document.getElementById('size-label').textContent=this.value;};
+
+const savedName=localStorage.getItem('freeboard-name');
+if(savedName)document.getElementById('in-name').value=savedName;
+
+// Live count on landing page
+db.ref('onlineUsers').on('value',snap=>{
+  const c=snap.numChildren()||0;
+  const hc=document.getElementById('hero-count');
+  const jc=document.getElementById('join-online-count');
+  const bar=document.getElementById('capacity-bar');
+  if(hc)hc.textContent=`${c} / ${MAX_USERS} online now`;
+  if(jc)jc.textContent=c;
+  if(bar)bar.style.width=Math.min(100,(c/MAX_USERS)*100)+'%';
+});
+
+// Activity feed from log
+db.ref('activityLog').limitToLast(5).on('child_added',snap=>{
+  const e=snap.val();
+  const feed=document.getElementById('activity-feed');
+  if(!feed)return;
+  const empties=feed.querySelectorAll('div[style*="italic"]');
+  empties.forEach(x=>x.remove());
+  const d=document.createElement('div');
+  d.style.cssText='font-size:13px;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:8px';
+  d.innerHTML=`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${e.color};flex-shrink:0"></span><span><b style="color:rgba(255,255,255,.7);font-weight:500">${esc(e.name)}</b> ${esc(e.verb)} ${esc(e.what)}</span><span style="color:rgba(255,255,255,.2);font-size:11px;margin-left:auto">${e.time}</span>`;
+  feed.insertBefore(d,feed.firstChild);
+  while(feed.children.length>5)feed.removeChild(feed.lastChild);
+});
+
+// ── Demo canvas: draw a messy collaborative whiteboard ──
+(function(){
+  const dc=document.getElementById('demo-canvas');
+  if(!dc)return;
+  function resizeDemo(){dc.width=dc.offsetWidth;dc.height=dc.offsetHeight;drawDemo();}
+  window.addEventListener('resize',resizeDemo);
+  setTimeout(resizeDemo,50);
+
+  function drawDemo(){
+    const c=dc.getContext('2d');
+    const w=dc.width,h=dc.height;
+    c.clearRect(0,0,w,h);
+    // White whiteboard background
+    c.fillStyle='#ffffff';c.fillRect(0,0,w,h);
+    // Grid — same as the image
+    c.strokeStyle='#e2e2e2';c.lineWidth=1;
+    const g=Math.round(w/26);
+    for(let x=0;x<=w;x+=g){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}
+    for(let y=0;y<=h;y+=g){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}
+
+    // Scale everything relative to canvas size
+    const sc=Math.min(w/900,h/520);
+    const ox=(w-900*sc)/2, oy=(h-520*sc)/2-20;
+    function pt(x,y){return[ox+x*sc, oy+y*sc];}
+    function sk(pts,lw,col='#111'){
+      c.save();c.strokeStyle=col;c.lineWidth=lw*sc;c.lineCap='round';c.lineJoin='round';
+      const mapped=pts.map(([x,y])=>pt(x,y));
+      c.beginPath();c.moveTo(mapped[0][0],mapped[0][1]);
+      for(let i=1;i<mapped.length;i++)c.lineTo(mapped[i][0],mapped[i][1]);
+      c.stroke();c.restore();
+    }
+
+    // "Roger" — top left, very large
+    sk([[55,35],[55,175]],8); // R stem
+    sk([[55,35],[108,35],[126,58],[124,98],[104,118],[55,118]],8); // R bump
+    sk([[95,118],[130,175]],8); // R leg
+    sk([[150,115],[144,133],[147,158],[161,174],[182,181],[204,173],[213,153],[209,128],[193,113],[170,110],[150,117]],8); // o
+    sk([[232,112],[226,132],[229,157],[243,173],[264,181],[287,178],[303,162],[307,140],[299,118],[281,107],[258,105],[234,115],[226,135]],8); // g
+    sk([[307,135],[307,200],[295,218],[274,225],[252,218],[240,206]],8); // g tail
+    sk([[330,148],[385,148],[383,130],[367,112],[342,110],[326,125],[323,150],[329,172],[349,183],[376,183],[391,170]],8); // e
+    sk([[412,120],[412,180]],8); // r stem
+    sk([[412,133],[428,112],[452,105],[468,108]],8); // r curl
+
+    // "is so cool!" — lower half, offset right
+    sk([[230,255],[230,318]],6); // i
+    sk([[229,232],[230,238]],10); // i dot
+    sk([[262,258],[262,246],[277,234],[297,234],[312,246],[309,265],[289,275],[271,285],[263,300],[268,317],[286,327],[309,327],[324,315]],6); // s
+    sk([[355,258],[355,246],[370,234],[390,234],[405,246],[402,265],[382,275],[364,285],[356,300],[361,317],[379,327],[402,327],[417,315]],6); // s
+    sk([[448,250],[439,267],[439,294],[449,312],[469,322],[491,319],[505,303],[507,280],[499,260],[483,248],[461,246],[447,252]],6); // o (so)
+    sk([[536,250],[527,267],[527,294],[537,312],[557,322],[579,319],[593,303],[595,280],[587,260],[571,248],[549,246],[535,252]],6); // c shape
+    sk([[624,250],[615,267],[615,294],[625,312],[645,322],[667,319],[681,303],[683,280],[675,260],[659,248],[637,246],[623,252]],6); // o
+    sk([[712,250],[703,267],[703,294],[713,312],[733,322],[755,319],[769,303],[771,280],[763,260],[747,248],[725,246],[711,252]],6); // o
+    sk([[798,200],[798,322]],6); // l
+    sk([[830,218],[830,305]],6,'#0055ff'); // ! blue
+    sk([[830,318],[831,326]],10,'#0055ff'); // ! dot blue
+    // Double underline — red
+    sk([[524,342],[844,342]],5,'#e00');
+    sk([[524,358],[844,358]],5,'#e00');
+    // Second ! — blue (making it "roger is so cool!!")
+    sk([[860,218],[860,305]],6,'#0055ff');
+    sk([[860,318],[861,326]],10,'#0055ff');
+  }
+
+      // Draw "Roger is so cool!" on the roger-canvas behind the welcome text
+    (function(){
+      const rc=document.getElementById('roger-canvas');
+      if(!rc)return;
+      function drawRoger(){
+        rc.width=rc.offsetWidth||400;rc.height=rc.offsetHeight||180;
+        const c=rc.getContext('2d'),w=rc.width,h=rc.height;
+        c.clearRect(0,0,w,h);
+        // White bg + grid
+        c.fillStyle='#fff';c.fillRect(0,0,w,h);
+        c.strokeStyle='#ddd';c.lineWidth=1;
+        for(let x=0;x<w;x+=28){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();}
+        for(let y=0;y<h;y+=28){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}
+        // Scale to fit
+        const sx=w/760,sy=h/380;
+        function s(pts,lw=5,col='#111'){
+          c.save();c.strokeStyle=col;c.lineWidth=lw;c.lineCap='round';c.lineJoin='round';
+          c.beginPath();c.moveTo(pts[0][0]*sx,pts[0][1]*sy);
+          for(let i=1;i<pts.length;i++)c.lineTo(pts[i][0]*sx,pts[i][1]*sy);
+          c.stroke();c.restore();
+        }
+        // Roger — top left, large
+        s([[50,40],[50,160]],7);s([[50,40],[95,40],[112,60],[110,95],[92,112],[50,112]],7);s([[85,112],[118,160]],7);
+        s([[135,108],[130,125],[133,148],[145,162],[164,167],[182,160],[190,143],[187,122],[172,108],[153,106],[136,112]],7);
+        s([[212,106],[207,124],[210,146],[222,160],[240,166],[260,163],[274,150],[278,132],[273,114],[258,105],[239,103],[218,110],[210,128]],7);
+        s([[210,148],[210,195],[200,208],[183,213],[166,207],[157,196]],7);
+        s([[298,128],[345,128],[344,113],[330,104],[309,103],[295,115],[293,132],[298,149],[316,160],[338,160],[350,150]],7);
+        s([[372,112],[372,162]],7);s([[372,124],[386,106],[406,100],[420,103]],7);
+        // "is so cool!" — lower right area
+        s([[180,220],[180,275]],5);s([[180,200],[181,205]],8);
+        s([[205,224],[205,215],[218,205],[235,205],[248,216],[245,232],[228,240],[212,248],[206,262],[211,276],[226,284],[246,284],[258,274]],5);
+        s([[278,224],[278,215],[291,205],[308,205],[321,216],[318,232],[301,240],[285,248],[279,262],[284,276],[299,284],[319,284],[331,274]],5);
+        s([[355,218],[347,232],[347,255],[356,270],[373,278],[392,276],[405,263],[407,244],[400,228],[386,218],[368,216],[353,220]],5);
+        s([[428,222],[420,235],[419,256],[427,270],[443,278],[462,276],[474,264],[476,244],[469,228],[455,219],[437,217],[425,222]],5);
+        s([[498,222],[490,235],[489,256],[497,270],[513,278],[532,276],[544,264],[546,244],[539,228],[525,219],[507,217],[495,222]],5);
+        s([[570,180],[570,278]],5);
+        s([[598,200],[598,265]],5);s([[598,278],[599,285]],8);
+        // Double underline under cool!
+        s([[415,298],[610,298]],4);s([[415,312],[610,312]],4);
+      }
+      setTimeout(()=>{drawRoger();},100);
+      window.addEventListener('resize',drawRoger);
+    })();
+  const fakePeople=[
+    {name:'alex',color:'#e74c3c',x:0.12,y:0.38,dx:0.0008,dy:0.0005},
+    {name:'sam',color:'#3498db',x:0.55,y:0.25,dx:-0.0006,dy:0.0009},
+    {name:'jordan',color:'#2ecc71',x:0.32,y:0.62,dx:0.001,dy:-0.0007},
+    {name:'morgan',color:'#9b59b6',x:0.78,y:0.55,dx:-0.0009,dy:0.0006},
+  ];
+  const fc=document.getElementById('fake-cursors');
+  const cursorEls=fakePeople.map(p=>{
+    const dot=document.createElement('div');
+    dot.style.cssText=`position:absolute;width:10px;height:10px;border-radius:50%;background:${p.color};pointer-events:none;transition:left .1s,top .1s`;
+    const label=document.createElement('div');
+    label.style.cssText=`position:absolute;font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;color:#fff;white-space:nowrap;pointer-events:none;background:${p.color}`;
+    label.textContent=p.name;
+    fc.appendChild(dot);fc.appendChild(label);
+    return{dot,label,p};
+  });
+  setInterval(()=>{
+    const fw=fc.offsetWidth,fh=fc.offsetHeight;
+    cursorEls.forEach(({dot,label,p})=>{
+      p.x+=p.dx+(Math.random()-.5)*0.001;
+      p.y+=p.dy+(Math.random()-.5)*0.001;
+      if(p.x<0.05||p.x>0.9){p.dx*=-1;}
+      if(p.y<0.05||p.y>0.85){p.dy*=-1;}
+      const sx=p.x*fw,sy=p.y*fh;
+      dot.style.left=(sx-5)+'px';dot.style.top=(sy-5)+'px';
+      label.style.left=(sx+10)+'px';label.style.top=(sy-8)+'px';
+    });
+  },80);
+})();
+</script>
+</body>
+</html>
