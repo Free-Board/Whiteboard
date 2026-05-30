@@ -30,8 +30,7 @@ body{font-family:'Segoe UI',sans-serif;background:#045fd0;color:#fff;height:100v
 .online-dot{width:7px;height:7px;border-radius:50%;background:#6effa0;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 #content{display:flex;flex:1;overflow:hidden}
-#canvas-wrap{flex:1;overflow:hidden;background:#045fd0;position:relative;cursor:none}
-#board{position:absolute;top:0;left:0;touch-action:none;display:block}
+#canvas-wrap{flex:1;overflow:hidden;background:#045fd0;position:relative;cursor:none}#board{position:absolute;top:0;left:0;touch-action:none;display:block}
 #zoom-controls{position:absolute;bottom:16px;left:16px;display:flex;align-items:center;gap:6px;background:rgba(3,61,138,.9);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:6px 14px;z-index:10}
 .zoom-btn{background:transparent;border:none;color:#cce4ff;font-size:18px;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.15s}
 .zoom-btn:hover{background:rgba(255,255,255,.15);color:#fff}
@@ -353,7 +352,9 @@ wrap.addEventListener('wheel',e=>{
 },{passive:false});
 
 wrap.addEventListener('mousedown',e=>{
-  if(e.button===1||e.button===2){
+  // Only pan on RIGHT click (button 2) or middle click (button 1)
+  // LEFT click (button 0) is always for drawing
+  if(e.button===2){
     isPanning=true; panLastX=e.clientX; panLastY=e.clientY;
     wrap.style.cursor='grabbing'; e.preventDefault();
   }
@@ -473,8 +474,8 @@ function onMouseMove(e){
   ctx.drawImage(sCanvas,0,0);
   drawCursor();
 
-  // Update firebase stroke pts every ~5 points
-  if(currentStrokePts.length%5===0){
+  // Update Firebase every 3 points for smoother sync
+  if(currentStrokePts.length%3===0){
     const s=allStrokes[currentStrokeId];
     if(s){s.pts=currentStrokePts;s.x2=p.x;s.y2=p.y;db.ref('strokes/'+currentStrokeId).update({pts:currentStrokePts,x2:p.x,y2:p.y});}
   }
