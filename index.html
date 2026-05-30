@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>FreeBoard</title> <!-- The browser tab title -->
+  <style>
+    /* Reset all default browser margins and padding */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Main body — uses the blue color as fallback background */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1557b0;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden; /* Prevents scrollbar on the app itself */
+    }
+
+    /* The brand name "FreeBoard" gradient text */
+    .brand {
+      font-size: 34px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #4f8ef7, #7b61ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    /* Pulsing green dot animation for "online" indicator */
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.4 } }
+
+    /* Bounce animation for scroll hint arrow */
+    @keyframes bounce {
+      0%,100% { transform: translateX(-50%) translateY(0) }
+      50%      { transform: translateX(-50%) translateY(8px) }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     HERO SECTION — The full-screen first thing users see
+     ============================================================ -->
+<div id="hero" style="position:relative;height:100vh;display:flex;align-items:flex-end;overflow:hidden;flex-shrink:0">
+
+  <!-- Background image of the whiteboard + gradient overlay -->
+  <div style="position:absolute;inset:0;overflow:hidden">
+
+    <!-- YOUR whiteboard screenshot as the background image -->
+    <div style="position:absolute;inset:0;background:url('https://i.postimg.cc/8CdmhNvn/Screenshot-2026-05-30-113449.png') center/cover no-repeat"></div>
+
+    <!-- Blue gradient at the bottom so the white text is readable -->
+    <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(21,87,176,0.96) 0%,rgba(21,87,176,0.5) 32%,transparent 55%)"></div>
+
+    <!-- Static "roger" cursor tag in the top-left corner -->
+    <div style="position:absolute;top:22px;left:22px;pointer-events:none;display:flex;align-items:center;gap:6px">
+      <div style="width:10px;height:10px;border-radius:50%;background:#e74c3c"></div>
+      <div style="background:#e74c3c;color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px">roger</div>
+    </div>
+
+  </div>
+
+  <!-- Hero text — sits at the bottom-left over the image -->
+  <div style="position:relative;z-index:2;padding:0 60px 64px;max-width:700px">
+    <h1 style="font-size:clamp(38px,7vw,78px);font-weight:800;line-height:1.05;margin-bottom:16px;color:#fff;letter-spacing:-1px">
+      Welcome to<br>FreeBoard!
+    </h1>
+    <p style="font-size:clamp(15px,1.8vw,18px);color:rgba(255,255,255,.65);max-width:480px;margin:0 0 32px;line-height:1.6;font-weight:400">
+      A public whiteboard without signup.
+    </p>
+
+    <!-- Two call-to-action buttons -->
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <!-- "Open Whiteboard" goes to the join section below -->
+      <a href="#join-section" style="background:#fff;color:#0a1628;padding:13px 28px;border-radius:6px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block;transition:.15s"
+         onmouseover="this.style.background='#e8f0ff'" onmouseout="this.style.background='#fff'">Open Whiteboard</a>
+
+      <!-- "Start a Canvas" also scrolls to the join section -->
+      <a href="#join-section" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);padding:13px 28px;border-radius:6px;font-size:15px;font-weight:500;text-decoration:none;border:1px solid rgba(255,255,255,.2);display:inline-block;transition:.15s"
+         onmouseover="this.style.background='rgba(255,255,255,.18)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Start a Canvas</a>
+    </div>
+  </div>
+
+  <!-- Small "scroll ↓" hint in the bottom-right -->
+  <div style="position:absolute;bottom:22px;right:40px;color:rgba(255,255,255,.3);font-size:12px;letter-spacing:.05em">scroll ↓</div>
+</div>
+
+
+<!-- ============================================================
+     JOIN SECTION — Scrolled-to area with about text + login box
+     ============================================================ -->
+<div id="join-section" style="background:linear-gradient(160deg,#1a6ed8 0%,#1557b0 60%,#0f3f8a 100%);padding:72px 60px;flex-shrink:0;min-height:100vh;display:flex;align-items:center">
+  <div style="max-width:1060px;margin:0 auto;width:100%;display:flex;gap:100px;align-items:flex-start;flex-wrap:wrap">
+
+    <!-- LEFT SIDE — About text written by Roger -->
+    <div style="flex:1.2;min-width:280px">
+      <h2 style="font-size:clamp(24px,3.5vw,36px);font-weight:700;color:#fff;margin-bottom:20px;line-height:1.2">
+        Greetings and salutations!
+      </h2>
+      <p style="font-size:15px;color:rgba(255,255,255,.88);line-height:1.85;margin-bottom:16px">
+        FreeBoard is an online whiteboard that can host up to 100 people drawing at the same time
+        on the same whiteboard. Feel free to draw whatever you like, but please use common sense.
+      </p>
+      <!-- Roger's signature -->
+      <p style="font-size:15px;color:rgba(255,255,255,.7);line-height:1.85;margin-bottom:32px">— Roger</p>
+    </div>
+
+    <!-- RIGHT SIDE — The login/join card -->
+    <div style="flex:1;min-width:260px;max-width:380px">
+      <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;padding:36px">
+
+        <!-- Card header -->
+        <div style="margin-bottom:24px">
+          <div style="font-size:20px;font-weight:700;color:#0a1628;margin-bottom:6px">Join the board</div>
+          <div style="font-size:13px;color:#556">No account needed.</div>
+        </div>
+
+        <!-- Name input field -->
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:#445;display:block;margin-bottom:6px">Your name</label>
+          <input id="in-name" placeholder="e.g. Roger" maxlength="30"
+            style="width:100%;padding:11px 14px;border:1px solid #bcd;border-radius:6px;font-size:14px;outline:none;font-family:inherit;background:#f4faff;color:#0a1628;transition:.2s"
+            onfocus="this.style.borderColor='#4f8ef7'" onblur="this.style.borderColor='#bcd'"/>
+        </div>
+
+        <!-- Join button — calls doLogin() when clicked -->
+        <button id="join-btn"
+          style="width:100%;padding:13px;background:#4f8ef7;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer;transition:.15s"
+          onmouseover="this.style.background='#3a7de8'" onmouseout="this.style.background='#4f8ef7'">
+          Enter FreeBoard
+        </button>
+
+        <!-- Error shown if name is empty -->
+        <div id="login-err" style="color:#ef4444;font-size:13px;margin-top:10px;display:none">
+          Please enter your name.
+        </div>
+
+        <!-- Error shown if server is full (100 users) -->
+        <div id="full-err" style="color:#c00;font-size:13px;margin-top:10px;display:none;line-height:1.6;padding:10px 12px;background:rgba(200,0,0,.06);border-radius:6px;border:1px solid rgba(200,0,0,.2)">
+          There are 100 people already in the server.<br>Please Wait! 😉
+        </div>
+
+        <!-- Capacity bar showing how many people are online -->
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(0,0,0,.08);display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:12px;color:#556">Capacity</div>
+          <div style="font-size:12px;color:#334">
+            <span id="join-online-count" style="color:#1a8a4a;font-weight:600">—</span> / 100 online
+          </div>
+        </div>
+
+        <!-- Visual capacity progress bar -->
+        <div style="margin-top:8px">
+          <div style="height:4px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden">
+            <div id="capacity-bar" style="height:100%;background:#4f8ef7;border-radius:2px;width:0%;transition:.5s"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================
+     FIREBASE — Loads the database library from Google's CDN
+     These two scripts MUST be loaded before your own code
+     ============================================================ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  // ── Firebase config ──────────────────────────────────────────
+  // This connects to YOUR Firebase project (Realtime Database)
+  // Do NOT share your apiKey publicly in production
+  firebase.initializeApp({
+    apiKey:            "AIzaSyAXwYbjaPCw7upkuxIUlz6byGXAjFAKjkM",
+    authDomain:        "freeboard-1f3c4.firebaseapp.com",
+    projectId:         "freeboard-1f3c4",
+    storageBucket:     "freeboard-1f3c4.firebasestorage.app",
+    messagingSenderId: "134603470341",
+    appId:             "1:134603470341:web:9ee9e03aaec66e84358e6c",
+    databaseURL:       "https://freeboard-1f3c4-default-rtdb.firebaseio.com"
+  });
+  const db = firebase.database(); // shortcut to the database
+
+  const MAX_USERS = 100; // maximum allowed users on the board
+
+  // ── Watch live online count and update the capacity bar ──────
+  db.ref('onlineUsers').on('value', snap => {
+    const c = snap.numChildren() || 0;
+    const jc  = document.getElementById('join-online-count');
+    const bar = document.getElementById('capacity-bar');
+    if (jc)  jc.textContent = c;
+    if (bar) bar.style.width = Math.min(100, (c / MAX_USERS) * 100) + '%';
+  });
+
+  // ── Login function — called when user clicks "Enter FreeBoard" ──
+  function doLogin() {
+    const name = document.getElementById('in-name').value.trim();
+
+    // Show error if name is blank
+    if (!name) {
+      document.getElementById('login-err').style.display = 'block';
+      return;
+    }
+    document.getElementById('login-err').style.display = 'none';
+    document.getElementById('full-err').style.display  = 'none';
+
+    // Check if server is full before letting them in
+    db.ref('onlineUsers').once('value', snap => {
+      if (snap.numChildren() >= MAX_USERS) {
+        // Server is full — show red error and keep checking every 5 seconds
+        document.getElementById('full-err').style.display = 'block';
+        document.getElementById('join-btn').disabled = true;
+        document.getElementById('join-btn').style.opacity = '0.5';
+
+        const interval = setInterval(() => {
+          db.ref('onlineUsers').once('value', snap2 => {
+            if (snap2.numChildren() < MAX_USERS) {
+              // A spot opened up — re-enable the button
+              clearInterval(interval);
+              document.getElementById('full-err').style.display = 'none';
+              document.getElementById('join-btn').disabled = false;
+              document.getElementById('join-btn').style.opacity = '1';
+            }
+          });
+        }, 5000); // check every 5 seconds
+        return;
+      }
+
+      // Save name to localStorage so user doesn't have to retype it
+      localStorage.setItem('freeboard-name', name);
+
+      // Redirect to the actual whiteboard page
+      window.location.href = 'whiteboard.html?name=' + encodeURIComponent(name);
+    });
+  }
+
+  // ── Wire up the button and Enter key ────────────────────────
+  document.getElementById('join-btn').onclick = doLogin;
+  document.getElementById('in-name').onkeydown = e => {
+    if (e.key === 'Enter') doLogin();
+  };
+
+  // ── Auto-fill name if they've visited before ─────────────────
+  const savedName = localStorage.getItem('freeboard-name');
+  if (savedName) document.getElementById('in-name').value = savedName;
+</script>
+</body>
+</html>
