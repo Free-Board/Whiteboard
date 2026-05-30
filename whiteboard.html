@@ -617,7 +617,8 @@ function completeLogin(name){
   db.ref('activityLog').limitToLast(50).on('child_added',snap=>appendLogEntry(snap.val()));
   pushLog('joined','FreeBoard');
 }
-
+document.getElementById('join-btn').onclick=doLogin;
+document.getElementById('in-name').onkeydown=e=>{if(e.key==='Enter')doLogin();};
 document.getElementById('t-pen').onclick=()=>setTool('pen');
 document.getElementById('t-highlight').onclick=()=>setTool('highlight');
 document.getElementById('t-line').onclick=()=>setTool('line');
@@ -632,15 +633,9 @@ document.getElementById('zoom-in-btn').onclick=()=>doZoom(0.15);
 document.getElementById('zoom-out-btn').onclick=()=>doZoom(-0.15);
 document.getElementById('home-btn').onclick=resetView;
 document.getElementById('stroke-size').oninput=function(){document.getElementById('size-label').textContent=this.value;};
-
-// Get name from URL (passed from index.html)
-const urlName = new URLSearchParams(window.location.search).get('name');
-if (urlName) {
-  completeLogin(urlName);
-} else {
-  // No name in URL — send back to index
-  window.location.href = 'index.html';
-}
+    
+const savedName=localStorage.getItem('freeboard-name');
+if(savedName)document.getElementById('in-name').value=savedName;
 
 // Live count on landing page
 db.ref('onlineUsers').on('value',snap=>{
