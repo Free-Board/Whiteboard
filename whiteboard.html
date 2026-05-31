@@ -122,6 +122,10 @@ const nameTags={};
 const wrap=document.getElementById('canvas-wrap');
 const canvas=document.getElementById('board');
 const ctx=canvas.getContext('2d');
+// Two offscreen canvases: one for board bg, one for strokes
+// This way we never redraw the grid during mouse move — much faster
+const bgCanvas=document.createElement('canvas');
+const bgCtx=bgCanvas.getContext('2d');
 const sCanvas=document.createElement('canvas');
 const sCtx=sCanvas.getContext('2d');
 
