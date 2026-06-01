@@ -123,7 +123,7 @@ const wrap=document.getElementById('canvas-wrap');
 const canvas=document.getElementById('board');
 const ctx=canvas.getContext('2d');
 // Two offscreen canvases: one for board bg, one for strokes
-// This way we never redraw the grid during mouse move — much faster
+// This way we never redraw the grid during mouse move
 const bgCanvas=document.createElement('canvas');
 const bgCtx=bgCanvas.getContext('2d');
 const sCanvas=document.createElement('canvas');
@@ -144,7 +144,7 @@ window.addEventListener('resize',resizeCanvas);
 
 function screenToBoard(sx,sy){return{x:(sx-vOffX)/vScale,y:(sy-vOffY)/vScale};}
 
-// Clamp so whiteboard always fills the screen — no blue gaps
+// Clamp so whiteboard always fills the screen
 function clampView(){
   const minScale=Math.max(canvas.width/BOARD_W,canvas.height/BOARD_H);
   vScale=Math.min(Math.max(vScale,minScale),10);
@@ -214,7 +214,7 @@ function rebuildStrokesOffscreen(){
   sCtx.restore();
 }
 
-// Full redraw: board + strokes + cursor + name tags
+// Full redraw: board, strokes, cursor, name tags
 function fullRedraw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   drawBoard();
@@ -328,7 +328,7 @@ window.addEventListener('mousemove',e=>{
 window.addEventListener('mouseup',()=>{if(isPanning){isPanning=false;wrap.style.cursor='';}});
 wrap.addEventListener('contextmenu',e=>e.preventDefault());
 
-// Get board coordinates from mouse/touch event
+// Get board coordinates from touch event
 function evtPos(e){
   const r=wrap.getBoundingClientRect();
   const src=e.touches?e.touches[0]:e;
@@ -393,7 +393,7 @@ function onMouseMove(e){
   const sz=+document.getElementById('stroke-size').value;
   currentStrokePts.push({x:p.x,y:p.y});
 
-  // Draw new segment directly onto strokes offscreen (instant, no full rebuild)
+  // Draw new segment directly onto strokes offscreen 
   if(tool==='pen'||tool==='highlight'||tool==='eraser'){
     sCtx.save();
     sCtx.translate(vOffX,vOffY); sCtx.scale(vScale,vScale);
@@ -413,7 +413,7 @@ function onMouseMove(e){
     }
     sCtx.restore();
   } else {
-    // Shapes: rebuild each move for clean preview
+    // Shapes, rebuild each move for clean preview
     rebuildStrokesOffscreen();
     sCtx.save();
     sCtx.translate(vOffX,vOffY); sCtx.scale(vScale,vScale);
@@ -428,7 +428,7 @@ function onMouseMove(e){
   lastX=p.x; lastY=p.y;
   updateNameTag(user.id,user.name,user.color,p.x,p.y);
 
-  // Composite board + strokes + cursor immediately
+  // Composite board, strokes, cursor immediately
   ctx.clearRect(0,0,canvas.width,canvas.height);
   drawBoard();
   ctx.drawImage(sCanvas,0,0);
@@ -578,9 +578,11 @@ const urlName=urlParams.get('name');
 if(urlName){
   completeLogin(urlName);
 } else {
-  // No name in URL — redirect back to index
+  // No name in URL ,redirect back to index
   window.location.href='index.html';
+  //stop being a goon and reading my code you chud 
 }
 </script>
 </body>
 </html>
+
