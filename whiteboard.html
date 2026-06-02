@@ -4,585 +4,363 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>FreeBoard</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#045fd0;color:#fff;height:100vh;display:flex;flex-direction:column;overflow:hidden}
-#app{display:flex;flex-direction:column;height:100vh}
-#topbar{background:#033d8a;padding:0 12px;display:flex;align-items:center;gap:7px;height:50px;flex-shrink:0;border-bottom:1px solid #0250b3;overflow-x:auto}
-.freeboard-logo{font-size:17px;font-weight:800;color:#fff;margin-right:4px;white-space:nowrap;flex-shrink:0;letter-spacing:.5px}
-.tool-btn{padding:5px 11px;border:1.5px solid rgba(255,255,255,.3);border-radius:7px;cursor:pointer;font-size:12px;background:transparent;color:#cce4ff;transition:.15s;font-weight:500;white-space:nowrap;flex-shrink:0}
-.tool-btn:hover{border-color:#fff;color:#fff}
-.tool-btn.active{background:#fff;color:#045fd0;border-color:#fff;font-weight:700}
-.sep{width:1px;height:26px;background:rgba(255,255,255,.2);margin:0 2px;flex-shrink:0}
-#color-picker{width:30px;height:30px;border:2px solid rgba(255,255,255,.4);border-radius:7px;cursor:pointer;padding:2px;background:transparent;flex-shrink:0}
-#stroke-size{width:70px;accent-color:#fff;flex-shrink:0}
-#size-label{font-size:12px;color:#cce4ff;min-width:18px;flex-shrink:0}
-.danger-btn{color:#ffaaaa;border-color:rgba(255,150,150,.4)}
-.danger-btn:hover{background:rgba(255,100,100,.2);border-color:#ffaaaa}
-#online-pill{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:5px}
-.online-dot{width:7px;height:7px;border-radius:50%;background:#6effa0;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-#content{display:flex;flex:1;overflow:hidden}
-#canvas-wrap{flex:1;overflow:hidden;background:#045fd0;position:relative;cursor:none}
-#board{position:absolute;top:0;left:0;touch-action:none;display:block}
-#zoom-controls{position:absolute;bottom:16px;left:16px;display:flex;align-items:center;gap:6px;background:rgba(3,61,138,.9);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:6px 14px;z-index:10}
-.zoom-btn{background:transparent;border:none;color:#cce4ff;font-size:18px;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:.15s}
-.zoom-btn:hover{background:rgba(255,255,255,.15);color:#fff}
-#zoom-label{font-size:12px;color:#cce4ff;min-width:42px;text-align:center}
-#log-panel{width:255px;background:#033d8a;border-left:1px solid #0250b3;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .3s ease,border .3s ease}
-#log-panel.hidden{width:0;border-left:none}
-#log-header{padding:12px 14px;border-bottom:1px solid #0250b3;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;white-space:nowrap}
-#log-entries{flex:1;overflow-y:auto;padding:8px;min-width:239px}
-.log-entry{padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:12px;line-height:1.5;border-left:3px solid;background:rgba(255,255,255,.07)}
-.log-entry .who{font-weight:700}
-.log-entry .what{color:#aac8ff}
-.log-entry .when{color:#5580bb;font-size:11px;margin-top:2px}
-#user-info{padding:10px 14px;border-top:1px solid #0250b3;display:flex;align-items:center;gap:8px;font-size:12px;flex-shrink:0;min-width:239px}
-.user-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-#status-bar{background:#033d8a;padding:3px 12px;font-size:11px;color:#5580bb;display:flex;gap:16px;flex-shrink:0;border-top:1px solid #0250b3}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: #fff;
+  overflow-x: hidden;
+
+  background:
+    radial-gradient(circle at 20% 10%, rgba(80,140,255,.18), transparent 35%),
+    radial-gradient(circle at 80% 90%, rgba(0,255,200,.08), transparent 40%),
+    linear-gradient(160deg, #070b14 0%, #0b1a2f 50%, #081224 100%);
+}
+
+/* subtle noise */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+}
+
+/* smooth animations globally */
+* {
+  transition: all .2s ease;
+}
+
+/* HERO */
+#hero {
+  height: 100vh;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+  overflow: hidden;
+}
+
+/* background image */
+#hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('https://i.postimg.cc/8CdmhNvn/Screenshot-2026-05-30-113449.png') center/cover no-repeat;
+  filter: saturate(1.1) contrast(1.05);
+  transform: scale(1.05);
+}
+
+/* gradient overlay */
+#hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(7,11,20,0.95) 0%,
+    rgba(7,11,20,0.6) 40%,
+    transparent 70%
+  );
+}
+
+/* floating glow */
+.hero-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 70% 40%, rgba(80,140,255,.25), transparent 40%),
+    radial-gradient(circle at 30% 60%, rgba(0,255,200,.12), transparent 45%);
+  filter: blur(60px);
+  opacity: .8;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 0 60px 70px;
+  max-width: 750px;
+}
+
+h1 {
+  font-size: clamp(42px, 7vw, 84px);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+p {
+  margin-top: 18px;
+  font-size: 16px;
+  color: rgba(255,255,255,.65);
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+/* button */
+.btn {
+  margin-top: 28px;
+  display: inline-block;
+  padding: 14px 28px;
+  border-radius: 12px;
+
+  background: linear-gradient(180deg, rgba(120,160,255,.9), rgba(70,120,220,.9));
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+
+  box-shadow: 0 10px 30px rgba(0,120,255,.25);
+  border: 1px solid rgba(255,255,255,.15);
+
+  transform: translateY(0);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(0,120,255,.35);
+}
+
+/* scroll hint */
+.scroll {
+  position: absolute;
+  bottom: 24px;
+  right: 40px;
+  font-size: 12px;
+  color: rgba(255,255,255,.35);
+}
+
+/* JOIN SECTION */
+#join-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 80px 60px;
+
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0,140,255,.12), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(0,255,200,.08), transparent 40%),
+    linear-gradient(160deg, #0a1b33 0%, #071427 100%);
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  gap: 80px;
+  flex-wrap: wrap;
+}
+
+.left {
+  flex: 1.2;
+  min-width: 280px;
+}
+
+.left h2 {
+  font-size: 34px;
+  margin-bottom: 16px;
+}
+
+.left p {
+  color: rgba(255,255,255,.7);
+  line-height: 1.8;
+}
+
+/* card */
+.card {
+  flex: 1;
+  min-width: 280px;
+
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(18px);
+
+  border-radius: 16px;
+  padding: 28px;
+
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+
+.card h3 {
+  margin-bottom: 4px;
+}
+
+.card input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.2);
+  color: #fff;
+
+  outline: none;
+  margin-top: 10px;
+}
+
+.card input:focus {
+  border-color: rgba(120,160,255,.6);
+  box-shadow: 0 0 0 3px rgba(80,140,255,.15);
+}
+
+.card button {
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+
+  border-radius: 10px;
+  border: none;
+
+  background: linear-gradient(180deg, rgba(120,160,255,.95), rgba(60,120,220,.95));
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.card button:hover {
+  transform: translateY(-1px);
+}
+
+/* capacity bar */
+.bar {
+  height: 6px;
+  background: rgba(255,255,255,.08);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.bar div {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4f8ef7, #00ffd5);
+}
+
 </style>
 </head>
+
 <body>
 
-<div id="app">
-  <div id="topbar">
-    <span class="freeboard-logo">FreeBoard</span>
-    <div class="sep"></div>
-    <button class="tool-btn active" id="t-pen">Pen</button>
-    <button class="tool-btn" id="t-highlight">Highlight</button>
-    <button class="tool-btn" id="t-line">Line</button>
-    <button class="tool-btn" id="t-rect">Rect</button>
-    <button class="tool-btn" id="t-circle">Circle</button>
-    <button class="tool-btn" id="t-text">Text</button>
-    <button class="tool-btn" id="t-eraser">Eraser</button>
-    <div class="sep"></div>
-    <input type="color" id="color-picker" value="#000000"/>
-    <input type="range" id="stroke-size" min="1" max="100" value="3"/>
-    <span id="size-label">3</span>
-    <div class="sep"></div>
-    <button class="tool-btn danger-btn" id="clear-mine-btn">Clear Mine</button>
-    <div style="flex:1"></div>
-    <div id="online-pill"><div class="online-dot"></div><span id="online-count">1 online</span></div>
-    <div class="sep"></div>
-    <button class="tool-btn" id="save-btn" style="color:#aaddff;border-color:rgba(170,221,255,.4)">Save PNG</button>
-    <button class="tool-btn" id="log-toggle-btn" style="color:#ccbbff;border-color:rgba(200,180,255,.4)">Log</button>
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-glow"></div>
+
+  <div class="hero-content">
+    <h1>Welcome to<br>FreeBoard</h1>
+
+    <p>
+      A real-time collaborative whiteboard built for speed, clarity, and creativity.
+      No accounts. No friction. Just ideas.
+    </p>
+
+    <a class="btn" href="#join-section">Open Whiteboard</a>
   </div>
-  <div id="content">
-    <div id="canvas-wrap">
-      <canvas id="board"></canvas>
-      <div id="zoom-controls">
-        <button class="zoom-btn" id="zoom-out-btn">−</button>
-        <span id="zoom-label">100%</span>
-        <button class="zoom-btn" id="zoom-in-btn">+</button>
-        <button class="zoom-btn" id="home-btn" style="font-size:12px;width:auto;padding:0 10px">Home</button>
-      </div>
+
+  <div class="scroll">scroll ↓</div>
+</div>
+
+<!-- JOIN -->
+<div id="join-section">
+  <div class="container">
+
+    <div class="left">
+      <h2>Draw together in real time.</h2>
+      <p>
+        FreeBoard lets up to 100 people collaborate on a shared infinite canvas.
+        Built for brainstorming, robotics strategy, design, and quick ideas.
+        Everything updates instantly.
+      </p>
+      <p style="margin-top:12px;opacity:.6">— Roger</p>
     </div>
-    <div id="log-panel">
-      <div id="log-header">Activity Log <span style="font-size:11px;color:#6effa0;font-weight:400">● live</span></div>
-      <div id="log-entries"><div style="color:#5580bb;font-size:12px;padding:8px">No activity yet!</div></div>
-      <div id="user-info">
-        <div class="user-dot" id="my-dot"></div>
-        <div><div id="my-name-label" style="font-weight:600;color:#fff"></div><div style="color:#5580bb;font-size:11px">you</div></div>
+
+    <div class="card">
+      <h3>Join the board</h3>
+      <p style="font-size:12px;opacity:.6;margin-top:4px">No account required</p>
+
+      <input id="in-name" placeholder="Enter your name" maxlength="30"/>
+
+      <button id="join-btn">Enter FreeBoard</button>
+
+      <div id="login-err" style="display:none;color:#ff5a5a;font-size:12px;margin-top:8px">
+        Please enter a name
       </div>
+
+      <div id="full-err" style="display:none;color:#ffcc66;font-size:12px;margin-top:8px">
+        Server full. Please wait.
+      </div>
+
+      <div style="margin-top:18px;font-size:12px;opacity:.7">
+        Capacity
+      </div>
+
+      <div class="bar">
+        <div id="capacity-bar"></div>
+      </div>
+
+      <div style="font-size:12px;margin-top:6px;opacity:.7">
+        <span id="join-online-count">0</span> / 100 online
+      </div>
+
     </div>
-  </div>
-  <div id="status-bar">
-    <span id="tool-label">Tool: Pen</span>
-    <span id="zoom-status">Zoom: 100%</span>
+
   </div>
 </div>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script>
 firebase.initializeApp({
-  apiKey:"AIzaSyAXwYbjaPCw7upkuxIUlz6byGXAjFAKjkM",
-  authDomain:"freeboard-1f3c4.firebaseapp.com",
-  projectId:"freeboard-1f3c4",
-  storageBucket:"freeboard-1f3c4.firebasestorage.app",
-  messagingSenderId:"134603470341",
-  appId:"1:134603470341:web:9ee9e03aaec66e84358e6c",
-  databaseURL:"https://freeboard-1f3c4-default-rtdb.firebaseio.com"
+  apiKey: "AIzaSyAXwYbjaPCw7upkuxIUlz6byGXAjFAKjkM",
+  authDomain: "freeboard-1f3c4.firebaseapp.com",
+  projectId: "freeboard-1f3c4",
+  databaseURL: "https://freeboard-1f3c4-default-rtdb.firebaseio.com"
 });
-const db=firebase.database();
 
-const COLORS=['#e74c3c','#e67e22','#f39c12','#2ecc71','#1abc9c','#3498db','#9b59b6','#e91e63','#00bcd4','#ff5722','#4f8ef7','#795548'];
-const BOARD_W=100000, BOARD_H=60000;
-const MAX_USERS=100;
+const db = firebase.database();
+const MAX_USERS = 100;
 
-let user=null, tool='pen', logVisible=true;
-let drawing=false, startX=0, startY=0, lastX=0, lastY=0;
-let currentStrokeId=null, currentStrokePts=[];
-let allStrokes={}, drawnKeys=new Set();
-let vScale=1, vOffX=0, vOffY=0;
-let isPanning=false, panLastX=0, panLastY=0;
-let curX=0, curY=0, curVisible=false;
-const nameTags={};
-
-const wrap=document.getElementById('canvas-wrap');
-const canvas=document.getElementById('board');
-const ctx=canvas.getContext('2d');
-// Two offscreen canvases: one for board bg, one for strokes
-// This way we never redraw the grid during mouse move
-const bgCanvas=document.createElement('canvas');
-const bgCtx=bgCanvas.getContext('2d');
-const sCanvas=document.createElement('canvas');
-const sCtx=sCanvas.getContext('2d');
-
-function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-function randColor(){return COLORS[Math.floor(Math.random()*COLORS.length)];}
-function randId(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
-
-// Resize canvas to fill the wrap area
-function resizeCanvas(){
-  const w=wrap.clientWidth, h=wrap.clientHeight;
-  canvas.width=w; canvas.height=h;
-  sCanvas.width=w; sCanvas.height=h;
-  clampView(); fullRedraw();
-}
-window.addEventListener('resize',resizeCanvas);
-
-function screenToBoard(sx,sy){return{x:(sx-vOffX)/vScale,y:(sy-vOffY)/vScale};}
-
-// Clamp so whiteboard always fills the screen
-function clampView(){
-  const minScale=Math.max(canvas.width/BOARD_W,canvas.height/BOARD_H);
-  vScale=Math.min(Math.max(vScale,minScale),10);
-  const bw=BOARD_W*vScale, bh=BOARD_H*vScale;
-  vOffX=Math.min(0,Math.max(canvas.width-bw,vOffX));
-  vOffY=Math.min(0,Math.max(canvas.height-bh,vOffY));
-}
-
-// Draw white board + grid
-function drawBoard(){
-  ctx.save();
-  ctx.translate(vOffX,vOffY); ctx.scale(vScale,vScale);
-  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,BOARD_W,BOARD_H);
-  ctx.strokeStyle='#eeeeee'; ctx.lineWidth=1/vScale;
-  for(let x=0;x<=BOARD_W;x+=200){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,BOARD_H);ctx.stroke();}
-  for(let y=0;y<=BOARD_H;y+=200){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(BOARD_W,y);ctx.stroke();}
-  ctx.restore();
-}
-
-// Render a single stroke onto a canvas context
-function renderStroke(c,s){
-  c.save(); c.lineCap='round'; c.lineJoin='round';
-  if(s.tool==='pen'||s.tool==='highlight'){
-    if(!s.pts||s.pts.length<1){c.restore();return;}
-    c.globalAlpha=s.tool==='highlight'?0.4:1;
-    c.globalCompositeOperation='source-over';
-    c.strokeStyle=s.dc||'#000';
-    c.lineWidth=s.tool==='highlight'?(s.sz||3)*5:(s.sz||3);
-    if(s.tool==='highlight')c.lineCap='square';
-    c.beginPath(); c.moveTo(s.pts[0].x,s.pts[0].y);
-    for(let i=1;i<s.pts.length;i++)c.lineTo(s.pts[i].x,s.pts[i].y);
-    c.stroke();
-  } else if(s.tool==='eraser'){
-    if(!s.pts||s.pts.length<1){c.restore();return;}
-    c.globalAlpha=1; c.globalCompositeOperation='destination-out';
-    c.lineWidth=(s.sz||3)*4;
-    c.beginPath(); c.moveTo(s.pts[0].x,s.pts[0].y);
-    for(let i=1;i<s.pts.length;i++)c.lineTo(s.pts[i].x,s.pts[i].y);
-    c.stroke();
-  } else if(s.tool==='line'){
-    c.globalAlpha=1; c.globalCompositeOperation='source-over';
-    c.strokeStyle=s.dc||'#000'; c.lineWidth=s.sz||3;
-    c.beginPath(); c.moveTo(s.x1,s.y1); c.lineTo(s.x2,s.y2); c.stroke();
-  } else if(s.tool==='rect'){
-    c.globalAlpha=1; c.globalCompositeOperation='source-over';
-    c.strokeStyle=s.dc||'#000'; c.lineWidth=s.sz||3;
-    c.strokeRect(s.x1,s.y1,s.x2-s.x1,s.y2-s.y1);
-  } else if(s.tool==='circle'){
-    c.globalAlpha=1; c.globalCompositeOperation='source-over';
-    c.strokeStyle=s.dc||'#000'; c.lineWidth=s.sz||3;
-    const rx=(s.x2-s.x1)/2,ry=(s.y2-s.y1)/2;
-    c.beginPath(); c.ellipse(s.x1+rx,s.y1+ry,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2); c.stroke();
-  } else if(s.tool==='text'){
-    c.globalAlpha=1; c.globalCompositeOperation='source-over';
-    c.fillStyle=s.dc||'#000'; c.font=`${Math.max(14,(s.sz||3)*5)}px Segoe UI`;
-    c.fillText(s.txt||'',s.x1,s.y1);
-  }
-  c.restore();
-}
-
-// Rebuild the strokes offscreen canvas from scratch
-function rebuildStrokesOffscreen(){
-  sCtx.clearRect(0,0,sCanvas.width,sCanvas.height);
-  sCtx.save();
-  sCtx.translate(vOffX,vOffY); sCtx.scale(vScale,vScale);
-  Object.values(allStrokes).sort((a,b)=>a.time-b.time).forEach(s=>renderStroke(sCtx,s));
-  sCtx.restore();
-}
-
-// Full redraw: board, strokes, cursor, name tags
-function fullRedraw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawBoard();
-  ctx.drawImage(sCanvas,0,0);
-  drawCursor();
-  drawNameTags();
-}
-
-// Custom cursor circle showing tool size
-function drawCursor(){
-  if(!curVisible)return;
-  const sz=+document.getElementById('stroke-size').value;
-  ctx.save();
-  if(tool==='text'){
-    const fontPx=Math.max(14,sz*5)*vScale;
-    const barH=Math.max(16,fontPx);
-    ctx.strokeStyle='rgba(79,142,247,0.9)'; ctx.lineWidth=2; ctx.setLineDash([]);
-    ctx.beginPath();ctx.moveTo(curX,curY-barH/2);ctx.lineTo(curX,curY+barH/2);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(curX-5,curY-barH/2);ctx.lineTo(curX+5,curY-barH/2);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(curX-5,curY+barH/2);ctx.lineTo(curX+5,curY+barH/2);ctx.stroke();
-    ctx.fillStyle='rgba(79,142,247,0.9)'; ctx.font='11px Segoe UI';
-    ctx.fillText(`${Math.max(14,sz*5)}px`,curX+8,curY-barH/2+10);
-  } else {
-    let r;
-    if(tool==='eraser') r=(sz*4/2)*vScale;
-    else if(tool==='highlight') r=(sz*5/2)*vScale;
-    else r=(sz/2)*vScale;
-    r=Math.max(2,r);
-    ctx.beginPath(); ctx.arc(curX,curY,r,0,Math.PI*2);
-    ctx.strokeStyle=tool==='eraser'?'rgba(100,100,100,0.8)':'rgba(79,142,247,0.9)';
-    ctx.lineWidth=1.5; ctx.setLineDash([3,3]); ctx.stroke();
-  }
-  ctx.restore();
-}
-
-// Name tag shown at tip of each user's drawing
-function updateNameTag(uid,name,color,bx,by){
-  if(nameTags[uid]?.timer)clearTimeout(nameTags[uid].timer);
-  nameTags[uid]={name,color,bx,by,visible:true,timer:null};
-  nameTags[uid].timer=setTimeout(()=>{
-    if(nameTags[uid])nameTags[uid].visible=false;
-    fullRedraw();
-  },5000);
-}
-
-function drawNameTags(){
-  Object.values(nameTags).forEach(tag=>{
-    if(!tag.visible)return;
-    const sx=tag.bx*vScale+vOffX;
-    const sy=tag.by*vScale+vOffY;
-    ctx.save();
-    ctx.font='bold 12px Segoe UI';
-    const tw=ctx.measureText(tag.name).width;
-    const pad=6,th=22,r=4;
-    const rx=sx+8,ry=sy-th-4;
-    ctx.beginPath();
-    ctx.moveTo(rx+r,ry);ctx.lineTo(rx+tw+pad*2-r,ry);
-    ctx.quadraticCurveTo(rx+tw+pad*2,ry,rx+tw+pad*2,ry+r);
-    ctx.lineTo(rx+tw+pad*2,ry+th-r);
-    ctx.quadraticCurveTo(rx+tw+pad*2,ry+th,rx+tw+pad*2-r,ry+th);
-    ctx.lineTo(rx+r,ry+th);
-    ctx.quadraticCurveTo(rx,ry+th,rx,ry+th-r);
-    ctx.lineTo(rx,ry+r);
-    ctx.quadraticCurveTo(rx,ry,rx+r,ry);
-    ctx.closePath();
-    ctx.fillStyle=tag.color; ctx.globalAlpha=0.92; ctx.fill();
-    ctx.globalAlpha=1; ctx.fillStyle='#fff';
-    ctx.fillText(tag.name,rx+pad,ry+15);
-    ctx.restore();
-  });
-}
-
-// Zoom toward cursor position
-function doZoom(delta,cx,cy){
-  cx=cx??canvas.width/2; cy=cy??canvas.height/2;
-  const ns=Math.min(Math.max(vScale*(1+delta),0.001),10);
-  const r=ns/vScale;
-  vOffX=cx-(cx-vOffX)*r; vOffY=cy-(cy-vOffY)*r; vScale=ns;
-  clampView(); updateZoomUI(); rebuildStrokesOffscreen(); fullRedraw();
-}
-function updateZoomUI(){
-  const p=Math.round(vScale*100)+'%';
-  document.getElementById('zoom-label').textContent=p;
-  document.getElementById('zoom-status').textContent='Zoom: '+p;
-}
-function resetView(){
-  vScale=Math.min(canvas.width/8000,canvas.height/5000);
-  vOffX=0; vOffY=0; clampView(); updateZoomUI(); rebuildStrokesOffscreen(); fullRedraw();
-}
-
-// Scroll wheel to zoom
-wrap.addEventListener('wheel',e=>{
-  e.preventDefault();
-  const r=wrap.getBoundingClientRect();
-  doZoom(e.deltaY<0?0.1:-0.1,e.clientX-r.left,e.clientY-r.top);
-},{passive:false});
-
-// RIGHT click to pan
-wrap.addEventListener('mousedown',e=>{
-  if(e.button===2){
-    isPanning=true; panLastX=e.clientX; panLastY=e.clientY;
-    wrap.style.cursor='grabbing'; e.preventDefault();
-  }
+db.ref('onlineUsers').on('value', snap => {
+  const c = snap.numChildren() || 0;
+  document.getElementById('join-online-count').textContent = c;
+  document.getElementById('capacity-bar').style.width = (c / MAX_USERS) * 100 + '%';
 });
-window.addEventListener('mousemove',e=>{
-  if(!isPanning)return;
-  vOffX+=e.clientX-panLastX; vOffY+=e.clientY-panLastY;
-  panLastX=e.clientX; panLastY=e.clientY;
-  clampView(); rebuildStrokesOffscreen(); fullRedraw();
-});
-window.addEventListener('mouseup',()=>{if(isPanning){isPanning=false;wrap.style.cursor='';}});
-wrap.addEventListener('contextmenu',e=>e.preventDefault());
 
-// Get board coordinates from touch event
-function evtPos(e){
-  const r=wrap.getBoundingClientRect();
-  const src=e.touches?e.touches[0]:e;
-  const b=screenToBoard(src.clientX-r.left,src.clientY-r.top);
-  b.x=Math.max(0,Math.min(BOARD_W,b.x));
-  b.y=Math.max(0,Math.min(BOARD_H,b.y));
-  return b;
-}
-function evtScreen(e){
-  const r=wrap.getBoundingClientRect();
-  const src=e.touches?e.touches[0]:e;
-  return{x:src.clientX-r.left,y:src.clientY-r.top};
-}
+function join() {
+  const name = document.getElementById('in-name').value.trim();
 
-// Drawing event listeners
-canvas.addEventListener('mousedown',e=>{if(e.button===0&&!isPanning)startDraw(e);});
-canvas.addEventListener('mousemove',onMouseMove);
-canvas.addEventListener('mouseup',e=>{if(e.button===0)endDraw(e);});
-canvas.addEventListener('mouseleave',()=>{curVisible=false;if(drawing)endDraw({});fullRedraw();});
-canvas.addEventListener('mouseenter',()=>{curVisible=true;});
-canvas.addEventListener('touchstart',e=>{e.preventDefault();startDraw(e);},{passive:false});
-canvas.addEventListener('touchmove',e=>{e.preventDefault();onMouseMove(e);},{passive:false});
-canvas.addEventListener('touchend',e=>endDraw(e));
-
-function startDraw(e){
-  if(!user||isPanning)return;
-  if(tool==='text'){handleText(e);return;}
-  const p=evtPos(e);
-  drawing=true;
-  startX=p.x; startY=p.y; lastX=p.x; lastY=p.y;
-  currentStrokeId=randId();
-  currentStrokePts=[{x:p.x,y:p.y}];
-  const color=document.getElementById('color-picker').value;
-  const sz=+document.getElementById('stroke-size').value;
-  const stroke={id:currentStrokeId,user:user.name,uid:user.id,color:user.color,
-    tool,dc:tool==='eraser'?null:color,sz,
-    x1:p.x,y1:p.y,x2:p.x,y2:p.y,
-    pts:[{x:p.x,y:p.y}],time:Date.now()};
-  allStrokes[currentStrokeId]=stroke;
-  drawnKeys.add(currentStrokeId);
-  db.ref('strokes/'+currentStrokeId).set(stroke);
-  updateNameTag(user.id,user.name,user.color,p.x,p.y);
-}
-
-function onMouseMove(e){
-  if(!user)return;
-  const sc=evtScreen(e);
-  curX=sc.x; curY=sc.y; curVisible=true;
-
-  if(!drawing||isPanning){
-    // Just update the cursor display
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    drawBoard();
-    ctx.drawImage(sCanvas,0,0);
-    drawCursor();
-    drawNameTags();
+  if (!name) {
+    document.getElementById('login-err').style.display = 'block';
     return;
   }
 
-  const p=evtPos(e);
-  const color=document.getElementById('color-picker').value;
-  const sz=+document.getElementById('stroke-size').value;
-  currentStrokePts.push({x:p.x,y:p.y});
-
-  // Draw new segment directly onto strokes offscreen 
-  if(tool==='pen'||tool==='highlight'||tool==='eraser'){
-    sCtx.save();
-    sCtx.translate(vOffX,vOffY); sCtx.scale(vScale,vScale);
-    sCtx.lineCap='round'; sCtx.lineJoin='round';
-    if(tool==='pen'){
-      sCtx.globalAlpha=1; sCtx.globalCompositeOperation='source-over';
-      sCtx.strokeStyle=color; sCtx.lineWidth=sz;
-      sCtx.beginPath(); sCtx.moveTo(lastX,lastY); sCtx.lineTo(p.x,p.y); sCtx.stroke();
-    } else if(tool==='highlight'){
-      sCtx.globalAlpha=0.4; sCtx.globalCompositeOperation='source-over';
-      sCtx.strokeStyle=color; sCtx.lineWidth=sz*5; sCtx.lineCap='square';
-      sCtx.beginPath(); sCtx.moveTo(lastX,lastY); sCtx.lineTo(p.x,p.y); sCtx.stroke();
-    } else if(tool==='eraser'){
-      sCtx.globalAlpha=1; sCtx.globalCompositeOperation='destination-out';
-      sCtx.lineWidth=sz*4;
-      sCtx.beginPath(); sCtx.moveTo(lastX,lastY); sCtx.lineTo(p.x,p.y); sCtx.stroke();
+  db.ref('onlineUsers').once('value', snap => {
+    if (snap.numChildren() >= MAX_USERS) {
+      document.getElementById('full-err').style.display = 'block';
+      return;
     }
-    sCtx.restore();
-  } else {
-    // Shapes, rebuild each move for clean preview
-    rebuildStrokesOffscreen();
-    sCtx.save();
-    sCtx.translate(vOffX,vOffY); sCtx.scale(vScale,vScale);
-    sCtx.globalAlpha=1; sCtx.globalCompositeOperation='source-over';
-    sCtx.strokeStyle=color; sCtx.lineWidth=sz; sCtx.lineCap='round';
-    if(tool==='line'){sCtx.beginPath();sCtx.moveTo(startX,startY);sCtx.lineTo(p.x,p.y);sCtx.stroke();}
-    else if(tool==='rect'){sCtx.strokeRect(startX,startY,p.x-startX,p.y-startY);}
-    else if(tool==='circle'){const rx=(p.x-startX)/2,ry=(p.y-startY)/2;sCtx.beginPath();sCtx.ellipse(startX+rx,startY+ry,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);sCtx.stroke();}
-    sCtx.restore();
-  }
 
-  lastX=p.x; lastY=p.y;
-  updateNameTag(user.id,user.name,user.color,p.x,p.y);
-
-  // Composite board, strokes, cursor immediately
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawBoard();
-  ctx.drawImage(sCanvas,0,0);
-  drawCursor();
-  drawNameTags();
-
-  // Sync to Firebase every 3 points
-  if(currentStrokePts.length%3===0){
-    const s=allStrokes[currentStrokeId];
-    if(s){s.pts=currentStrokePts;s.x2=p.x;s.y2=p.y;db.ref('strokes/'+currentStrokeId).update({pts:currentStrokePts,x2:p.x,y2:p.y});}
-  }
-}
-
-function endDraw(e){
-  if(!drawing)return; drawing=false;
-  if(!user||!currentStrokeId)return;
-  const s=allStrokes[currentStrokeId];
-  if(s){
-    s.pts=currentStrokePts; s.x2=lastX; s.y2=lastY;
-    db.ref('strokes/'+currentStrokeId).update({pts:currentStrokePts,x2:lastX,y2:lastY});
-  }
-  pushLog('drew with',tool);
-  currentStrokeId=null; currentStrokePts=[];
-}
-
-function handleText(e){
-  const p=evtPos(e); const txt=prompt('Enter text:'); if(!txt)return;
-  const color=document.getElementById('color-picker').value;
-  const sz=+document.getElementById('stroke-size').value;
-  const sid=randId();
-  const stroke={id:sid,user:user.name,uid:user.id,color:user.color,tool:'text',dc:color,sz,x1:p.x,y1:p.y,txt,time:Date.now()};
-  allStrokes[sid]=stroke; drawnKeys.add(sid);
-  db.ref('strokes/'+sid).set(stroke);
-  updateNameTag(user.id,user.name,user.color,p.x,p.y);
-  pushLog('typed',`"${txt.slice(0,20)}"`);
-  rebuildStrokesOffscreen(); fullRedraw();
-}
-
-function setTool(t){
-  tool=t;
-  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('t-'+t).classList.add('active');
-  document.getElementById('tool-label').textContent='Tool: '+t.charAt(0).toUpperCase()+t.slice(1);
-}
-
-function clearMyStrokes(){
-  if(!user||!confirm('Clear all your drawings?'))return;
-  Object.keys(allStrokes).forEach(k=>{if(allStrokes[k].uid===user.id){delete allStrokes[k];db.ref('strokes/'+k).remove();}});
-  pushLog('cleared','their drawings');
-  rebuildStrokesOffscreen(); fullRedraw();
-}
-
-function saveImage(){const a=document.createElement('a');a.download='freeboard.png';a.href=canvas.toDataURL();a.click();}
-
-function toggleLog(){
-  logVisible=!logVisible;
-  document.getElementById('log-panel').classList.toggle('hidden',!logVisible);
-  setTimeout(resizeCanvas,320);
-}
-
-function pushLog(verb,what){
-  db.ref('activityLog').push({name:user.name,color:user.color,verb,what,time:new Date().toLocaleTimeString(),ts:Date.now()});
-}
-function appendLogEntry(e){
-  const el=document.getElementById('log-entries');
-  const d=document.createElement('div');
-  d.className='log-entry'; d.style.borderColor=e.color;
-  d.innerHTML=`<div class="who" style="color:${e.color}">${esc(e.name)}</div><div class="what">${esc(e.verb)} ${esc(e.what)}</div><div class="when">${e.time}</div>`;
-  el.insertBefore(d,el.firstChild);
-  while(el.children.length>120)el.removeChild(el.lastChild);
-}
-
-function completeLogin(name){
-  user={name,color:randColor(),id:randId()};
-  localStorage.setItem('freeboard-name',name);
-  document.getElementById('my-name-label').textContent=name;
-  document.getElementById('my-dot').style.background=user.color;
-
-  const myRef=db.ref('onlineUsers/'+user.id);
-  myRef.set({name:user.name,color:user.color,ts:firebase.database.ServerValue.TIMESTAMP});
-  myRef.onDisconnect().remove();
-
-  db.ref('onlineUsers').on('value',snap=>{
-    const c=snap.numChildren()||1;
-    document.getElementById('online-count').textContent=`${c} / ${MAX_USERS} online`;
+    localStorage.setItem('freeboard-name', name);
+    window.location.href = 'whiteboard.html?name=' + encodeURIComponent(name);
   });
-
-  // Load all existing strokes first, then listen for new ones
-  db.ref('strokes').once('value',snap=>{
-    snap.forEach(child=>{
-      const k=child.key,s=child.val();
-      if(!drawnKeys.has(k)){drawnKeys.add(k);allStrokes[k]=s;}
-    });
-    resizeCanvas();
-    setTimeout(resetView,100);
-  });
-
-  // Listen for strokes added by other users
-  db.ref('strokes').on('child_added',snap=>{
-    const k=snap.key,s=snap.val();
-    if(drawnKeys.has(k)){allStrokes[k]=s;if(k!==currentStrokeId){rebuildStrokesOffscreen();fullRedraw();}return;}
-    drawnKeys.add(k); allStrokes[k]=s;
-    rebuildStrokesOffscreen(); fullRedraw();
-  });
-
-  // Listen for strokes updated live by other users
-  db.ref('strokes').on('child_changed',snap=>{
-    const k=snap.key,s=snap.val();
-    if(k===currentStrokeId)return;
-    allStrokes[k]=s;
-    if(s.pts&&s.pts.length>0){
-      const last=s.pts[s.pts.length-1];
-      updateNameTag(s.uid,s.user,s.color,last.x,last.y);
-    }
-    rebuildStrokesOffscreen(); fullRedraw();
-  });
-
-  // Listen for strokes deleted
-  db.ref('strokes').on('child_removed',snap=>{
-    delete allStrokes[snap.key]; drawnKeys.delete(snap.key);
-    rebuildStrokesOffscreen(); fullRedraw();
-  });
-
-  db.ref('activityLog').limitToLast(50).on('child_added',snap=>appendLogEntry(snap.val()));
-  pushLog('joined','FreeBoard');
 }
 
-// Wire up toolbar buttons
-document.getElementById('t-pen').onclick=()=>setTool('pen');
-document.getElementById('t-highlight').onclick=()=>setTool('highlight');
-document.getElementById('t-line').onclick=()=>setTool('line');
-document.getElementById('t-rect').onclick=()=>setTool('rect');
-document.getElementById('t-circle').onclick=()=>setTool('circle');
-document.getElementById('t-text').onclick=()=>setTool('text');
-document.getElementById('t-eraser').onclick=()=>setTool('eraser');
-document.getElementById('clear-mine-btn').onclick=clearMyStrokes;
-document.getElementById('save-btn').onclick=saveImage;
-document.getElementById('log-toggle-btn').onclick=toggleLog;
-document.getElementById('zoom-in-btn').onclick=()=>doZoom(0.15);
-document.getElementById('zoom-out-btn').onclick=()=>doZoom(-0.15);
-document.getElementById('home-btn').onclick=resetView;
-document.getElementById('stroke-size').oninput=function(){document.getElementById('size-label').textContent=this.value;};
+document.getElementById('join-btn').onclick = join;
 
-// Read name from URL (passed by index.html) and go straight to board
-const urlParams=new URLSearchParams(window.location.search);
-const urlName=urlParams.get('name');
-if(urlName){
-  completeLogin(urlName);
-} else {
-  // No name in URL ,redirect back to index
-  window.location.href='index.html';
-  //stop being a goon and reading my code you chud 
-}
+const saved = localStorage.getItem('freeboard-name');
+if (saved) document.getElementById('in-name').value = saved;
 </script>
+
 </body>
 </html>
-
