@@ -1,152 +1,366 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>FreeBoard</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #1557b0;
-      color: #fff;
-      overflow-y: auto; /* allows page to scroll */
-    }
-    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.4 } }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FreeBoard</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: #fff;
+  overflow-x: hidden;
+
+  background:
+    radial-gradient(circle at 20% 10%, rgba(80,140,255,.18), transparent 35%),
+    radial-gradient(circle at 80% 90%, rgba(0,255,200,.08), transparent 40%),
+    linear-gradient(160deg, #070b14 0%, #0b1a2f 50%, #081224 100%);
+}
+
+/* subtle noise */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+}
+
+/* smooth animations globally */
+* {
+  transition: all .2s ease;
+}
+
+/* HERO */
+#hero {
+  height: 100vh;
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+  overflow: hidden;
+}
+
+/* background image */
+#hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('https://i.postimg.cc/8CdmhNvn/Screenshot-2026-05-30-113449.png') center/cover no-repeat;
+  filter: saturate(1.1) contrast(1.05);
+  transform: scale(1.05);
+}
+
+/* gradient overlay */
+#hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(7,11,20,0.95) 0%,
+    rgba(7,11,20,0.6) 40%,
+    transparent 70%
+  );
+}
+
+/* floating glow */
+.hero-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 70% 40%, rgba(80,140,255,.25), transparent 40%),
+    radial-gradient(circle at 30% 60%, rgba(0,255,200,.12), transparent 45%);
+  filter: blur(60px);
+  opacity: .8;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  padding: 0 60px 70px;
+  max-width: 750px;
+}
+
+h1 {
+  font-size: clamp(42px, 7vw, 84px);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+p {
+  margin-top: 18px;
+  font-size: 16px;
+  color: rgba(255,255,255,.65);
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+/* button */
+.btn {
+  margin-top: 28px;
+  display: inline-block;
+  padding: 14px 28px;
+  border-radius: 12px;
+
+  background: linear-gradient(180deg, rgba(120,160,255,.9), rgba(70,120,220,.9));
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+
+  box-shadow: 0 10px 30px rgba(0,120,255,.25);
+  border: 1px solid rgba(255,255,255,.15);
+
+  transform: translateY(0);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(0,120,255,.35);
+}
+
+/* scroll hint */
+.scroll {
+  position: absolute;
+  bottom: 24px;
+  right: 40px;
+  font-size: 12px;
+  color: rgba(255,255,255,.35);
+}
+
+/* JOIN SECTION */
+#join-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 80px 60px;
+
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0,140,255,.12), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(0,255,200,.08), transparent 40%),
+    linear-gradient(160deg, #0a1b33 0%, #071427 100%);
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  gap: 80px;
+  flex-wrap: wrap;
+}
+
+.left {
+  flex: 1.2;
+  min-width: 280px;
+}
+
+.left h2 {
+  font-size: 34px;
+  margin-bottom: 16px;
+}
+
+.left p {
+  color: rgba(255,255,255,.7);
+  line-height: 1.8;
+}
+
+/* card */
+.card {
+  flex: 1;
+  min-width: 280px;
+
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(18px);
+
+  border-radius: 16px;
+  padding: 28px;
+
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+
+.card h3 {
+  margin-bottom: 4px;
+}
+
+.card input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.2);
+  color: #fff;
+
+  outline: none;
+  margin-top: 10px;
+}
+
+.card input:focus {
+  border-color: rgba(120,160,255,.6);
+  box-shadow: 0 0 0 3px rgba(80,140,255,.15);
+}
+
+.card button {
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+
+  border-radius: 10px;
+  border: none;
+
+  background: linear-gradient(180deg, rgba(120,160,255,.95), rgba(60,120,220,.95));
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.card button:hover {
+  transform: translateY(-1px);
+}
+
+/* capacity bar */
+.bar {
+  height: 6px;
+  background: rgba(255,255,255,.08);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.bar div {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #4f8ef7, #00ffd5);
+}
+
+</style>
 </head>
+
 <body>
 
-<!-- HERO SECTION -->
-<!-- FIXED: removed overflow:hidden from this div — that was blocking scroll -->
-<div id="hero" style="position:relative;height:100vh;display:flex;align-items:flex-end;">
+<!-- HERO -->
+<div id="hero">
+  <div class="hero-glow"></div>
 
-  <div style="position:absolute;inset:0;overflow:hidden">
-    <div style="position:absolute;inset:0;background:url('https://i.postimg.cc/8CdmhNvn/Screenshot-2026-05-30-113449.png') center/cover no-repeat"></div>
-    <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(21,87,176,0.96) 0%,rgba(21,87,176,0.5) 32%,transparent 55%)"></div>
-    <div style="position:absolute;bottom:80px;right:40px;pointer-events:none;display:flex;align-items:center;gap:6px">
-      <div style="width:10px;height:10px;border-radius:50%;background:#e74c3c"></div>
-      <div style="background:#e74c3c;color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px">roger</div>
-    </div>
-  </div>
+  <div class="hero-content">
+    <h1>Welcome to<br>FreeBoard</h1>
 
-  <div style="position:relative;z-index:2;padding:0 60px 64px;max-width:700px">
-    <h1 style="font-size:clamp(38px,7vw,78px);font-weight:800;line-height:1.05;margin-bottom:16px;color:#fff;letter-spacing:-1px">
-      Welcome to<br>FreeBoard!
-    </h1>
-    <p style="font-size:clamp(15px,1.8vw,18px);color:rgba(255,255,255,.65);max-width:480px;margin:0 0 32px;line-height:1.6;font-weight:400">
-      A public whiteboard without signup.
+    <p>
+      A real-time collaborative whiteboard built for speed, clarity, and creativity.
+      No accounts. No friction. Just ideas.
     </p>
-    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <a href="#join-section" style="background:#fff;color:#0a1628;padding:13px 28px;border-radius:6px;font-size:15px;font-weight:600;text-decoration:none;display:inline-block">Open Whiteboard</a>
 
-    </div>
+    <a class="btn" href="#join-section">Open Whiteboard</a>
   </div>
 
-  <div style="position:absolute;bottom:22px;right:40px;color:rgba(255,255,255,.3);font-size:12px">scroll ↓</div>
+  <div class="scroll">scroll ↓</div>
 </div>
 
+<!-- JOIN -->
+<div id="join-section">
+  <div class="container">
 
-<!-- JOIN SECTION -->
-<div id="join-section" style="background:linear-gradient(160deg,#1a6ed8 0%,#1557b0 60%,#0f3f8a 100%);padding:72px 60px;min-height:100vh;display:flex;align-items:center">
-  <div style="max-width:1060px;margin:0 auto;width:100%;display:flex;gap:100px;align-items:flex-start;flex-wrap:wrap">
-
-    <div style="flex:1.2;min-width:280px">
-      <h2 style="font-size:clamp(24px,3.5vw,36px);font-weight:700;color:#fff;margin-bottom:20px;line-height:1.2">
-        Greetings and salutations!
-      </h2>
-      <p style="font-size:15px;color:rgba(255,255,255,.88);line-height:1.85;margin-bottom:16px">
-        FreeBoard is an online whiteboard that can host up to 100 people drawing at the
-        same time on the same whiteboard. Feel free to draw whatever you like, but please
-        use common sense.
+    <div class="left">
+      <h2>Draw together in real time.</h2>
+      <p>
+        FreeBoard lets up to 100 people collaborate on a shared infinite canvas.
+        Built for brainstorming, robotics strategy, design, and quick ideas.
+        Everything updates instantly.
       </p>
-      <p style="font-size:15px;color:rgba(255,255,255,.6);margin-bottom:32px">— Roger</p>
+      <p style="margin-top:12px;opacity:.6">— Roger</p>
     </div>
 
-    <div style="flex:1;min-width:260px;max-width:380px">
-      <div style="background:#fff;border-radius:8px;padding:36px">
-        <div style="font-size:20px;font-weight:700;color:#0a1628;margin-bottom:6px">Join the board</div>
-        <div style="font-size:13px;color:#666;margin-bottom:20px">No account needed.</div>
-        <label style="font-size:12px;color:#445;display:block;margin-bottom:6px">Your name</label>
-        <input id="in-name" placeholder="e.g. Roger" maxlength="30"
-          style="width:100%;padding:11px 14px;border:1px solid #bcd;border-radius:6px;font-size:14px;outline:none;font-family:inherit;background:#f4faff;color:#0a1628;margin-bottom:12px;transition:.2s"
-          onfocus="this.style.borderColor='#4f8ef7'" onblur="this.style.borderColor='#bcd'"/>
-        <button id="join-btn"
-          style="width:100%;padding:13px;background:#4f8ef7;color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer"
-          onmouseover="this.style.background='#3a7de8'" onmouseout="this.style.background='#4f8ef7'">
-          Enter FreeBoard
-        </button>
-        <div id="login-err" style="color:#ef4444;font-size:13px;margin-top:10px;display:none">Please enter your name.</div>
-        <div id="full-err" style="color:#c00;font-size:13px;margin-top:10px;display:none;padding:10px 12px;background:rgba(200,0,0,.06);border-radius:6px;border:1px solid rgba(200,0,0,.2);line-height:1.6">
-          There are 100 people already in the server.<br>Please Wait! 😉
-        </div>
-        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:12px;color:#556">Capacity</div>
-          <div style="font-size:12px;color:#334"><span id="join-online-count" style="color:#1a8a4a;font-weight:600">—</span> / 100 online</div>
-        </div>
-        <div style="margin-top:8px;height:4px;background:#eee;border-radius:2px;overflow:hidden">
-          <div id="capacity-bar" style="height:100%;background:#4f8ef7;border-radius:2px;width:0%;transition:.5s"></div>
-        </div>
+    <div class="card">
+      <h3>Join the board</h3>
+      <p style="font-size:12px;opacity:.6;margin-top:4px">No account required</p>
+
+      <input id="in-name" placeholder="Enter your name" maxlength="30"/>
+
+      <button id="join-btn">Enter FreeBoard</button>
+
+      <div id="login-err" style="display:none;color:#ff5a5a;font-size:12px;margin-top:8px">
+        Please enter a name
       </div>
+
+      <div id="full-err" style="display:none;color:#ffcc66;font-size:12px;margin-top:8px">
+        Server full. Please wait.
+      </div>
+
+      <div style="margin-top:18px;font-size:12px;opacity:.7">
+        Capacity
+      </div>
+
+      <div class="bar">
+        <div id="capacity-bar"></div>
+      </div>
+
+      <div style="font-size:12px;margin-top:6px;opacity:.7">
+        <span id="join-online-count">0</span> / 100 online
+      </div>
+
     </div>
 
   </div>
 </div>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script>
-  firebase.initializeApp({
-    apiKey:            "AIzaSyAXwYbjaPCw7upkuxIUlz6byGXAjFAKjkM",
-    authDomain:        "freeboard-1f3c4.firebaseapp.com",
-    projectId:         "freeboard-1f3c4",
-    storageBucket:     "freeboard-1f3c4.firebasestorage.app",
-    messagingSenderId: "134603470341",
-    appId:             "1:134603470341:web:9ee9e03aaec66e84358e6c",
-    databaseURL:       "https://freeboard-1f3c4-default-rtdb.firebaseio.com"
-  });
-  const db = firebase.database();
-  const MAX_USERS = 100;
+firebase.initializeApp({
+  apiKey: "AIzaSyAXwYbjaPCw7upkuxIUlz6byGXAjFAKjkM",
+  authDomain: "freeboard-1f3c4.firebaseapp.com",
+  projectId: "freeboard-1f3c4",
+  databaseURL: "https://freeboard-1f3c4-default-rtdb.firebaseio.com"
+});
 
-  db.ref('onlineUsers').on('value', snap => {
-    const c = snap.numChildren() || 0;
-    const jc  = document.getElementById('join-online-count');
-    const bar = document.getElementById('capacity-bar');
-    if (jc)  jc.textContent = c;
-    if (bar) bar.style.width = Math.min(100, (c / MAX_USERS) * 100) + '%';
-  });
+const db = firebase.database();
+const MAX_USERS = 100;
 
-  function doLogin() {
-    const name = document.getElementById('in-name').value.trim();
-    if (!name) { document.getElementById('login-err').style.display = 'block'; return; }
-    document.getElementById('login-err').style.display = 'none';
-    document.getElementById('full-err').style.display  = 'none';
-    db.ref('onlineUsers').once('value', snap => {
-      if (snap.numChildren() >= MAX_USERS) {
-        document.getElementById('full-err').style.display = 'block';
-        document.getElementById('join-btn').disabled = true;
-        document.getElementById('join-btn').style.opacity = '0.5';
-        const interval = setInterval(() => {
-          db.ref('onlineUsers').once('value', snap2 => {
-            if (snap2.numChildren() < MAX_USERS) {
-              clearInterval(interval);
-              document.getElementById('full-err').style.display = 'none';
-              document.getElementById('join-btn').disabled = false;
-              document.getElementById('join-btn').style.opacity = '1';
-            }
-          });
-        }, 5000);
-        return;
-      }
-      localStorage.setItem('freeboard-name', name);
-      window.location.href = 'whiteboard.html?name=' + encodeURIComponent(name);
-    });
+db.ref('onlineUsers').on('value', snap => {
+  const c = snap.numChildren() || 0;
+  document.getElementById('join-online-count').textContent = c;
+  document.getElementById('capacity-bar').style.width = (c / MAX_USERS) * 100 + '%';
+});
+
+function join() {
+  const name = document.getElementById('in-name').value.trim();
+
+  if (!name) {
+    document.getElementById('login-err').style.display = 'block';
+    return;
   }
 
-  document.getElementById('join-btn').onclick = doLogin;
-  document.getElementById('in-name').onkeydown = e => { if (e.key === 'Enter') doLogin(); };
-  const savedName = localStorage.getItem('freeboard-name');
-  if (savedName) document.getElementById('in-name').value = savedName;
+  db.ref('onlineUsers').once('value', snap => {
+    if (snap.numChildren() >= MAX_USERS) {
+      document.getElementById('full-err').style.display = 'block';
+      return;
+    }
+
+    localStorage.setItem('freeboard-name', name);
+    window.location.href = 'whiteboard.html?name=' + encodeURIComponent(name);
+  });
+}
+
+document.getElementById('join-btn').onclick = join;
+
+const saved = localStorage.getItem('freeboard-name');
+if (saved) document.getElementById('in-name').value = saved;
 </script>
+
 </body>
 </html>
